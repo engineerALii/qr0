@@ -3,627 +3,663 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crystal QR | القارئ الذكي</title>
+    <title>الماسح الزجاجي | Glass QR</title>
+    <meta name="description" content="قارئ QR عصري، سريع، وآمن يعمل على الهاتف.">
     
-    <!-- خط تجوال من جوجل -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-    <!-- مكتبة Tailwind CSS للتنسيق -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- مكتبة FontAwesome للأيقونات -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- مكتبة HTML5-QRCode للمسح -->
+    <!-- QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <!-- Config & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        glass: {
+                            100: 'rgba(255, 255, 255, 0.1)',
+                            200: 'rgba(255, 255, 255, 0.2)',
+                            300: 'rgba(255, 255, 255, 0.3)',
+                            dark: 'rgba(0, 0, 0, 0.3)',
+                        },
+                        primary: '#10b981', // Emerald 500
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
     
-    <!-- مكتبة QRCode.js للتوليد -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <style>
-        :root {
-            --primary-color: #00f2ff; /* سيان مضيء */
-            --bg-deep: #050505;
-            --glass-bg: rgba(20, 20, 20, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
-        }
-
         body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-deep);
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            height: 100vh;
-            width: 100vw;
-            color: #e0e0e0;
-            overflow: hidden;
-            position: fixed;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #115e59 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* التصميم الزجاجي الداكن المحسن */
+        /* Glassmorphism Classes */
         .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.9);
-        }
-
-        .glass-input {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            transition: all 0.3s ease;
-        }
-        
-        .glass-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
-            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
         .glass-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #aaa;
-            position: relative;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .glass-btn:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Hide Scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Scanner Overlay Customization */
+        #reader {
+            border-radius: 1.5rem;
             overflow: hidden;
-        }
-
-        .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-        }
-
-        .glass-btn.active {
-            background: rgba(0, 242, 255, 0.15);
-            border-color: rgba(0, 242, 255, 0.4);
-            color: var(--primary-color);
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
-        }
-        
-        .glass-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 30%;
-            right: 30%;
-            height: 2px;
-            background: var(--primary-color);
-            border-radius: 2px;
-            box-shadow: 0 0 10px var(--primary-color);
-        }
-
-        .glow-effect {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, rgba(0,0,0,0) 70%);
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* --- تخصيص قارئ QR المركزي --- */
-        .scanner-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
             width: 100%;
-            height: 100%;
-            position: absolute; /* تموضع مطلق لملء الحاوية */
-            top: 0;
-            left: 0;
-            z-index: 10;
-            pointer-events: none; /* للسماح بالنقر على العناصر الأخرى إذا تداخلت */
         }
-
-        .scanner-wrapper {
-            position: relative;
-            width: min(70vw, 40vh); /* حجم مناسب */
-            height: min(70vw, 40vh);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.85); /* تعتيم الخلفية */
-            background: #000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: auto; /* إعادة تفعيل النقر داخل المربع */
-        }
-
         #reader video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            border-radius: 24px;
+            object-fit: cover;
+            border-radius: 1.5rem;
         }
-
-        /* الليزر */
-        .scan-laser {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: var(--primary-color);
-            box-shadow: 0 0 4px var(--primary-color), 0 0 20px var(--primary-color);
-            z-index: 20;
-            animation: scanning 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-            opacity: 0.8;
+        /* Hide html5-qrcode default elements */
+        #reader__dashboard_section_csr span, 
+        #reader__dashboard_section_swaplink {
+            display: none !important;
         }
-
-        @keyframes scanning {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        .corner {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-color: var(--primary-color);
-            border-style: solid;
-            border-width: 3px;
-            z-index: 15;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
-        }
-        .tl { top: 15px; left: 15px; border-right: 0; border-bottom: 0; }
-        .tr { top: 15px; right: 15px; border-left: 0; border-bottom: 0; }
-        .bl { bottom: 15px; left: 15px; border-right: 0; border-top: 0; }
-        .br { bottom: 15px; right: 15px; border-left: 0; border-top: 0; }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: rgba(10, 10, 10, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        .history-item { border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="flex items-center justify-center p-0 sm:p-4">
+<body class="h-screen w-full overflow-hidden flex flex-col items-center justify-center font-sans antialiased">
 
-    <div class="glow-effect"></div>
+    <!-- Background Orbs for aesthetic -->
+    <div class="fixed top-[-10%] left-[-10%] w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+    <div class="fixed top-[20%] right-[-10%] w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+    <div class="fixed bottom-[-10%] left-[20%] w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-    <div class="glass-panel w-full md:max-w-md flex flex-col h-full sm:h-[90vh] sm:rounded-3xl rounded-none relative overflow-hidden">
+    <!-- MAIN APP CONTAINER -->
+    <main id="app" class="relative w-full max-w-md h-full max-h-[900px] flex flex-col p-4 z-10 transition-all duration-300">
         
-        <header class="py-5 px-6 shrink-0 z-20 flex items-center justify-between border-b border-white/5 bg-black/20">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-                    <i class="fa-solid fa-qrcode text-cyan-400 text-lg"></i>
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-6 px-2">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
                 </div>
-                <div>
-                    <h1 class="text-xl font-bold text-white tracking-wide">Crystal QR</h1>
-                    <p class="text-[10px] text-gray-400 uppercase tracking-widest">Premium Scanner</p>
-                </div>
+                <span class="font-bold text-lg tracking-wide">الماسح الزجاجي</span>
             </div>
-            <button class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 transition-colors">
-                <i class="fa-solid fa-gear"></i>
+            <button onclick="showPage('settings')" class="glass-btn p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
             </button>
         </header>
 
-        <div class="px-6 shrink-0 z-20 pt-6 pb-2">
-            <div class="flex justify-between bg-black/40 p-1.5 rounded-xl border border-white/5 shadow-inner shadow-black/50">
-                <button onclick="switchTab('scan')" id="tab-scan" class="glass-btn active flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
-                    مسح
-                </button>
-                <button onclick="switchTab('generate')" id="tab-generate" class="glass-btn flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
-                    إنشاء
-                </button>
-                <button onclick="switchTab('history')" id="tab-history" class="glass-btn flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
-                    السجل
-                </button>
+        <!-- VIEW: HERO (Landing) -->
+        <section id="view-hero" class="flex-1 flex flex-col justify-center items-center text-center space-y-8 animate-fade-in">
+            <div class="relative">
+                <div class="absolute inset-0 bg-emerald-500 blur-2xl opacity-20 rounded-full"></div>
+                <div class="glass-panel p-8 rounded-3xl border-2 border-white/10 relative z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-white opacity-90 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                </div>
             </div>
-        </div>
-
-        <main class="flex-1 relative w-full overflow-hidden flex flex-col">
             
-            <!-- ====== قسم المسح ====== -->
-            <!-- جعلت الحاوية relative بالكامل لتمركز العناصر -->
-            <div id="view-scan" class="view-section transition-all duration-500 w-full h-full relative">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-emerald-200">مسح سريع وآمن</h1>
+                <p class="text-gray-300 text-sm max-w-[250px] mx-auto">قارئ QR متطور يحترم خصوصيتك. يعمل محلياً على جهازك.</p>
+            </div>
+
+            <div class="w-full space-y-3">
+                <button onclick="startScanner()" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/40 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    ابدأ المسح
+                </button>
                 
-                <!-- تعليمات المسح (مثبتة في الأعلى) -->
-                <div class="absolute top-8 left-0 right-0 flex justify-center z-20 pointer-events-none transition-opacity duration-300" id="scan-instruction-container">
-                    <p id="scan-instruction" class="text-xs text-cyan-300/70 bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-cyan-500/10 animate-pulse shadow-lg">
-                        <i class="fa-solid fa-expand mr-1"></i> وجه الكاميرا نحو الرمز
-                    </p>
-                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <label for="qr-input-file" class="glass-btn cursor-pointer py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-white/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        رفع صورة
+                    </label>
+                    <input type="file" id="qr-input-file" accept="image/*" class="hidden" onchange="handleFileUpload(this)">
 
-                <!-- حاوية الماسح (في المنتصف تماماً) -->
-                <div class="scanner-container">
-                    <div class="scanner-wrapper">
-                        <div class="scan-laser"></div>
-                        <div class="corner tl"></div> <div class="corner tr"></div>
-                        <div class="corner bl"></div> <div class="corner br"></div>
-                        <div id="reader"></div>
-                    </div>
+                    <button onclick="showPage('history')" class="glass-btn py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-white/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        السجل
+                    </button>
                 </div>
+            </div>
+        </section>
 
-                <!-- نتيجة المسح (مثبتة في الأسفل) -->
-                <div id="scan-result" class="hidden absolute bottom-6 left-6 right-6 glass-panel p-5 rounded-2xl border-l-4 border-l-cyan-500 z-30 animate-fade-in-up bg-black/80 backdrop-blur-xl">
-                    <div class="flex items-start justify-between mb-3">
-                        <div>
-                            <p class="text-xs text-gray-400 mb-1">المحتوى الممسوح</p>
-                            <p id="result-text" class="text-base font-semibold text-white break-all line-clamp-2">...</p>
-                        </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="copyResult()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors" title="نسخ">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                            <button onclick="resetScan()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors" title="مسح جديد">
-                                <i class="fa-solid fa-rotate-right"></i>
-                            </button>
-                        </div>
+        <!-- VIEW: SCANNER -->
+        <section id="view-scanner" class="hidden flex-1 flex flex-col relative h-full">
+            <div class="absolute inset-0 z-0 flex items-center justify-center bg-black/80 rounded-3xl overflow-hidden">
+                <div id="reader" class="w-full h-full relative"></div>
+                <!-- Overlay Frame -->
+                <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-20">
+                    <div class="w-64 h-64 border-2 border-emerald-500 rounded-2xl relative shadow-[0_0_50px_rgba(16,185,129,0.5)]">
+                        <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg -mt-1 -ml-1"></div>
+                        <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg -mt-1 -mr-1"></div>
+                        <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg -mb-1 -ml-1"></div>
+                        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-emerald-400 rounded-br-lg -mb-1 -mr-1"></div>
                     </div>
-                    <a id="result-link" href="#" target="_blank" class="w-full py-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 flex items-center justify-center gap-2 text-sm font-bold transition-all hidden group">
-                        <span>فتح الرابط</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square group-hover:translate-x-[-2px] group-hover:-translate-y-[2px] transition-transform"></i>
-                    </a>
+                    <p class="mt-8 text-white/90 text-sm font-semibold bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">وجه الكاميرا داخل المربع</p>
                 </div>
             </div>
 
-            <!-- ====== قسم التوليد ====== -->
-            <div id="view-generate" class="view-section hidden h-full overflow-y-auto px-6 py-2">
-                <div class="flex flex-col gap-5 pt-4">
-                    <div class="relative group">
-                        <textarea id="qr-input" placeholder="أدخل النص أو الرابط هنا..." 
-                            class="glass-input w-full p-5 rounded-2xl resize-none h-40 text-sm focus:outline-none placeholder-gray-500 text-gray-200 shadow-xl"></textarea>
-                        <div class="absolute bottom-4 left-4 flex gap-2">
-                             <i class="fa-solid fa-keyboard text-gray-600"></i>
-                        </div>
+            <!-- Scanner Controls -->
+            <div class="absolute bottom-6 left-0 right-0 z-30 flex justify-center gap-6">
+                <button onclick="stopScanner()" class="glass-btn w-12 h-12 rounded-full flex items-center justify-center bg-red-500/20 border-red-400/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: RESULT -->
+        <section id="view-result" class="hidden flex-1 flex flex-col justify-center items-center relative animate-fade-in-up">
+            <div class="glass-panel w-full p-6 rounded-3xl space-y-6 border-t border-white/20">
+                
+                <!-- Icon based on type -->
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mb-4 shadow-xl shadow-emerald-500/20">
+                        <svg id="result-icon-link" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <svg id="result-icon-text" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-center mb-1" id="result-type-text">تم العثور على رابط</h2>
+                    <p class="text-xs text-gray-400" id="result-date">الآن</p>
+                </div>
+
+                <!-- Content Box -->
+                <div class="bg-black/20 rounded-xl p-4 break-words">
+                    <p id="result-content" class="text-sm text-gray-200 font-mono leading-relaxed select-all">https://example.com</p>
+                </div>
+
+                <!-- Security Warning -->
+                <div id="security-warning" class="hidden bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h4 class="text-xs font-bold text-yellow-200 mb-1">تنبيه أمان</h4>
+                        <p class="text-[10px] text-yellow-100/80">هذا رابط خارجي. تحقق من النطاق <span id="domain-preview" class="font-bold underline"></span> قبل المتابعة.</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="btn-open" onclick="openResult()" class="col-span-3 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        فتح الرابط
+                    </button>
+                    
+                    <button onclick="copyResult()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        نسخ
+                    </button>
+                    
+                    <button onclick="shareResult()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                        مشاركة
+                    </button>
+
+                    <button onclick="goHome()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs bg-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: SETTINGS / ABOUT -->
+        <section id="view-settings" class="hidden flex-1 w-full glass-panel rounded-3xl p-6 overflow-y-auto no-scrollbar">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <button onclick="goHome()" class="p-1 rounded-full hover:bg-white/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+                الإعدادات
+            </h2>
+
+            <div class="space-y-6">
+                <!-- Toggles -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
+                        <span class="text-sm">الأصوات</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-sound" class="sr-only peer" checked onchange="saveSettings()">
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
                     </div>
                     
-                    <button onclick="generateQR()" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-lg shadow-cyan-900/20 hover:shadow-cyan-900/40 hover:scale-[1.02] transition-all active:scale-[0.98]">
-                        <i class="fa-solid fa-wand-magic-sparkles ml-2"></i> إنشاء الرمز
-                    </button>
-
-                    <div id="qr-output-container" class="hidden flex flex-col items-center mt-2 p-8 glass-panel rounded-3xl bg-black/40 border border-white/5 animate-fade-in-up">
-                        <div class="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                            <div id="qrcode"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-6 flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
-                            <i class="fa-solid fa-circle-check text-green-500"></i> تم الإنشاء بنجاح
-                        </p>
+                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
+                        <span class="text-sm">الاهتزاز (Haptic)</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-vibrate" class="sr-only peer" checked onchange="saveSettings()">
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
                     </div>
-                    <div class="h-20"></div>
+                </div>
+
+                <!-- Delete History -->
+                <button onclick="clearHistory()" class="w-full glass-btn py-3 rounded-xl text-red-300 flex items-center justify-center gap-2 text-sm hover:bg-red-500/20 hover:border-red-500/40">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    مسح كل السجل
+                </button>
+
+                <!-- About & Privacy -->
+                <div class="mt-8 text-xs text-gray-400 space-y-4">
+                    <h3 class="text-sm font-bold text-white mb-2">الخصوصية والأمان</h3>
+                    <p class="leading-relaxed">
+                        نحن لا نجمع أي بيانات. تتم معالجة جميع صور QR محلياً داخل متصفحك. لا يتم إرسال أي صورة إلى خوادم سحابية.
+                    </p>
+                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+                        <strong>نصيحة:</strong> تحقق دائماً من الروابط قبل فتحها. يوفر هذا التطبيق معاينة للنطاق لمساعدتك.
+                    </div>
+                    <p class="text-center pt-4 opacity-50">الإصدار 1.0.0 | تصميم زجاجي</p>
                 </div>
             </div>
+        </section>
 
-            <!-- ====== قسم السجل ====== -->
-            <div id="view-history" class="view-section hidden h-full overflow-y-auto px-6 py-2">
-                <div class="flex justify-between items-center mb-6 sticky top-0 bg-[#050505]/80 backdrop-blur-md py-3 z-10 border-b border-white/5">
-                    <h3 class="font-bold text-gray-200 flex items-center gap-2">
-                        <i class="fa-solid fa-timeline text-gray-500"></i> العمليات السابقة
-                    </h3>
-                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 px-3 py-1.5 rounded-lg border border-red-500/20 transition-all">
-                        مسح الكل
+        <!-- VIEW: HISTORY -->
+        <section id="view-history" class="hidden flex-1 w-full glass-panel rounded-3xl p-6 overflow-hidden flex flex-col">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <button onclick="goHome()" class="p-1 rounded-full hover:bg-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
                     </button>
-                </div>
-                <ul id="history-list" class="space-y-3 pb-20">
-                    <!-- العناصر -->
-                </ul>
+                    السجل
+                </h2>
+                <span class="text-xs text-gray-400 bg-white/10 px-2 py-1 rounded-md" id="history-count">0 عناصر</span>
             </div>
-
-        </main>
+            
+            <div id="history-list" class="flex-1 overflow-y-auto no-scrollbar space-y-3">
+                <!-- Items injected via JS -->
+                <div class="text-center text-gray-400 mt-10">لا يوجد سجل مسح</div>
+            </div>
+        </section>
         
-        <footer class="text-center py-3 shrink-0 z-20 bg-black/40 backdrop-blur-md text-gray-600 border-t border-white/5 text-[10px] tracking-wider">
-            CRYSTAL QR PRO &copy; 2023
-        </footer>
-    </div>
-
-    <audio id="scan-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
-
-    <div id="toast" class="toast">
-        <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 border border-green-500/50">
-            <i class="fa-solid fa-check text-green-400 text-xs"></i>
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-900/90 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none z-50 text-sm border border-white/10 backdrop-blur-md">
+            تم نسخ النص
         </div>
-        <span id="toast-msg" class="text-sm font-medium text-white">تم بنجاح!</span>
-    </div>
 
+    </main>
+
+    <!-- LOGIC -->
     <script>
-        let html5QrcodeScanner = null;
-        const historyKey = 'crystal_qr_history';
-        const scanSound = document.getElementById('scan-sound');
+        // --- Global State ---
+        let html5QrCode;
+        let currentResult = null;
+        let settings = {
+            sound: true,
+            vibrate: true
+        };
 
+        // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
             loadHistory();
-            setTimeout(startScanner, 300);
         });
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.glass-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+        // --- Navigation ---
+        function showPage(pageId) {
+            const views = ['hero', 'scanner', 'result', 'settings', 'history'];
+            views.forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${pageId}`).classList.remove('hidden');
+        }
 
-            if (tabName === 'scan') {
-                startScanner();
-            } else {
-                stopScanner();
+        function goHome() {
+            stopScanner();
+            showPage('hero');
+        }
+
+        // --- Scanner Logic ---
+        async function startScanner() {
+            showPage('scanner');
+            
+            // Cleanup previous instance if exists to avoid errors
+            if (html5QrCode) {
+                try {
+                    if (html5QrCode.isScanning) await html5QrCode.stop();
+                    html5QrCode.clear();
+                } catch(e) { console.log("Cleanup warning:", e); }
+            }
+
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            
+            try {
+                // 1. Get List of Cameras
+                const devices = await Html5Qrcode.getCameras();
+                
+                if (devices && devices.length) {
+                    let cameraId = devices[0].id;
+                    
+                    // 2. Try to find back camera (environment)
+                    const backCamera = devices.find(d => 
+                        d.label.toLowerCase().includes('back') || 
+                        d.label.toLowerCase().includes('environment') ||
+                        d.label.toLowerCase().includes('rear')
+                    );
+                    
+                    if (backCamera) {
+                        cameraId = backCamera.id;
+                    }
+
+                    // 3. Start scanning with specific camera ID (more reliable than facingMode)
+                    await html5QrCode.start(
+                        cameraId, 
+                        config, 
+                        onScanSuccess, 
+                        onScanFailure
+                    );
+                } else {
+                    // Fallback if device list is empty but API didn't fail
+                    await html5QrCode.start(
+                        { facingMode: "environment" }, 
+                        config, 
+                        onScanSuccess, 
+                        onScanFailure
+                    );
+                }
+            } catch (err) {
+                console.error("Scanner Error: ", err);
+                
+                let msg = "تعذر الوصول للكاميرا.";
+                if (err.name === "NotAllowedError" || err.toString().includes("Permission")) {
+                    msg = "يرجى منح إذن استخدام الكاميرا.";
+                } else if (err.name === "NotFoundError" || err.toString().includes("found")) {
+                    msg = "لم يتم العثور على كاميرا مناسبة.";
+                }
+                
+                showToast(msg);
+                setTimeout(() => goHome(), 2000);
             }
         }
 
-        function startScanner() {
-            if (html5QrcodeScanner) return;
-
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            // تقليل الحجم قليلاً لضمان عدم ملامسة الحواف في جميع الشاشات
-            const qrboxSize = Math.min(width, height) * 0.65;
-
-            const config = { 
-                fps: 10, 
-                qrbox: { width: qrboxSize, height: qrboxSize },
-                aspectRatio: 1.0,
-                disableFlip: false
-            };
-            
-            const html5QrCode = new Html5Qrcode("reader");
-            
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess,
-                onScanFailure
-            ).then(() => {
-                html5QrcodeScanner = html5QrCode;
-                fixVideoDisplay();
-            }).catch(err => {
-                console.error("Error starting scanner", err);
-                renderCameraError();
-            });
-        }
-
-        function fixVideoDisplay() {
-            const observer = new MutationObserver(() => {
-                const video = document.querySelector('#reader video');
-                if(video) {
-                    video.style.objectFit = "cover";
-                    video.style.width = "100%";
-                    video.style.height = "100%";
-                    video.style.borderRadius = "24px";
-                }
-            });
-            observer.observe(document.getElementById('reader'), { childList: true, subtree: true });
-        }
-
-        function renderCameraError() {
-            document.getElementById('reader').innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 bg-white/5">
-                    <i class="fa-solid fa-camera-slash text-3xl mb-3 text-red-400 opacity-80"></i>
-                    <p class="text-sm font-medium">تعذر الوصول للكاميرا</p>
-                    <p class="text-xs mt-2 opacity-60">تأكد من منح الأذونات</p>
-                </div>`;
-        }
-
-        function stopScanner() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    html5QrcodeScanner.clear();
-                    html5QrcodeScanner = null;
-                }).catch(err => console.log("Stop failed", err));
+        async function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                    html5QrCode.clear();
+                } catch(e) { console.error(e); }
             }
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            scanSound.play().catch(e => {});
-            
-            const resultDiv = document.getElementById('scan-result');
-            const resultText = document.getElementById('result-text');
-            const resultLink = document.getElementById('result-link');
-            const instructionContainer = document.getElementById('scan-instruction-container');
-            const scannerContainer = document.querySelector('.scanner-container');
+            stopScanner();
+            handleResult(decodedText);
+            playFeedback();
+        }
 
-            resultDiv.classList.remove('hidden');
-            // إخفاء التعليمات
-            if(instructionContainer) instructionContainer.style.opacity = '0';
+        function onScanFailure(error) {
+            // handle scanning failure, usually better to ignore and keep scanning.
+            // console.warn(`Code scan error = ${error}`);
+        }
+
+        // --- File Upload ---
+        function handleFileUpload(input) {
+            if (input.files.length === 0) return;
             
-            resultText.textContent = decodedText;
+            const imageFile = input.files[0];
             
-            // جعل القارئ نصف شفاف للتركيز على النتيجة
-            scannerContainer.style.opacity = '0.3';
-            scannerContainer.style.pointerEvents = 'none';
+            // Re-instantiate if needed just for file scan
+            const fileScanner = new Html5Qrcode("reader"); // using same ID temporarily, doesn't matter for file
             
-            if (isValidURL(decodedText)) {
-                resultLink.href = decodedText;
-                resultLink.classList.remove('hidden');
-                resultLink.classList.add('flex');
+            fileScanner.scanFile(imageFile, true)
+                .then(decodedText => {
+                    handleResult(decodedText);
+                    playFeedback();
+                })
+                .catch(err => {
+                    showToast("لم يتم العثور على QR في الصورة");
+                    console.error(err);
+                });
+                
+            // Reset input
+            input.value = '';
+        }
+
+        // --- Result Handling ---
+        function handleResult(text) {
+            currentResult = text;
+            const isUrl = isValidUrl(text);
+            const date = new Date().toLocaleDateString('ar-EG', { hour: '2-digit', minute:'2-digit' });
+
+            // UI Updates
+            document.getElementById('result-content').innerText = text;
+            document.getElementById('result-date').innerText = date;
+            
+            if (isUrl) {
+                document.getElementById('result-type-text').innerText = "رابط موقع";
+                document.getElementById('result-icon-link').classList.remove('hidden');
+                document.getElementById('result-icon-text').classList.add('hidden');
+                document.getElementById('btn-open').classList.remove('hidden');
+                document.getElementById('btn-open').classList.add('flex'); // restore flex
+                
+                // Security Check
+                const domain = new URL(text).hostname;
+                document.getElementById('domain-preview').innerText = domain;
+                document.getElementById('security-warning').classList.remove('hidden');
+                document.getElementById('security-warning').classList.add('flex');
             } else {
-                resultLink.classList.add('hidden');
-                resultLink.classList.remove('flex');
+                document.getElementById('result-type-text').innerText = "نص / بيانات";
+                document.getElementById('result-icon-link').classList.add('hidden');
+                document.getElementById('result-icon-text').classList.remove('hidden');
+                document.getElementById('btn-open').classList.add('hidden');
+                document.getElementById('btn-open').classList.remove('flex');
+                document.getElementById('security-warning').classList.add('hidden');
+                document.getElementById('security-warning').classList.remove('flex');
             }
 
-            addToHistory(decodedText, 'scan');
-            showToast("تم قراءة الرمز!");
-            
-            if(html5QrcodeScanner) {
-                 html5QrcodeScanner.pause();
+            addToHistory({ text, isUrl, date: new Date().toISOString() });
+            showPage('result');
+        }
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;  
             }
         }
 
-        function resetScan() {
-             const resultDiv = document.getElementById('scan-result');
-             const instructionContainer = document.getElementById('scan-instruction-container');
-             const scannerContainer = document.querySelector('.scanner-container');
-
-             resultDiv.classList.add('hidden');
-             if(instructionContainer) instructionContainer.style.opacity = '1';
-             
-             scannerContainer.style.opacity = '1';
-             scannerContainer.style.pointerEvents = 'auto';
-
-             if(html5QrcodeScanner) {
-                 html5QrcodeScanner.resume();
-             }
-        }
-
-        function onScanFailure(error) {}
-
-        function generateQR() {
-            const input = document.getElementById('qr-input').value;
-            const container = document.getElementById('qr-output-container');
-            const qrDiv = document.getElementById('qrcode');
-
-            if (!input.trim()) {
-                showToast("يرجى كتابة نص أولاً", true);
-                return;
-            }
-
-            qrDiv.innerHTML = "";
-            container.classList.remove('hidden');
-
-            new QRCode(qrDiv, {
-                text: input,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            addToHistory(input, 'create');
-            
-            setTimeout(() => {
-                container.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 100);
-        }
-
-        function addToHistory(text, type) {
-            let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-            if (history.length > 0 && history[0].text === text && history[0].type === type) return;
-
-            const newItem = {
-                text: text,
-                type: type,
-                date: new Date().toLocaleDateString('ar-EG'),
-                time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
-            };
-            
-            history.unshift(newItem);
-            if(history.length > 20) history.pop();
-            localStorage.setItem(historyKey, JSON.stringify(history));
-            loadHistory();
-        }
-
-        function loadHistory() {
-            const list = document.getElementById('history-list');
-            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-
-            if (history.length === 0) {
-                list.innerHTML = `<li class="text-center py-16 flex flex-col items-center gap-4 opacity-40">
-                    <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-                        <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-400"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-500">سجل العمليات فارغ</span>
-                </li>`;
-                return;
-            }
-
-            list.innerHTML = '';
-            history.forEach((item, index) => {
-                const isScan = item.type === 'scan';
-                const icon = isScan ? 'fa-eye' : 'fa-wand-magic-sparkles';
-                const colorClass = isScan ? 'text-cyan-400' : 'text-purple-400';
-                const bgClass = isScan ? 'bg-cyan-500/10' : 'bg-purple-500/10';
-                
-                const li = document.createElement('li');
-                li.className = 'history-item glass-panel p-4 rounded-xl flex items-center justify-between group hover:bg-white/5 transition-all animate-fade-in border-transparent hover:border-white/10';
-                li.style.animationDelay = `${index * 50}ms`;
-                
-                li.innerHTML = `
-                    <div class="flex items-center gap-4 overflow-hidden">
-                        <div class="w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center shrink-0 border border-white/5">
-                            <i class="fa-solid ${icon} ${colorClass} text-sm"></i>
-                        </div>
-                        <div class="flex flex-col overflow-hidden">
-                            <span class="text-sm font-medium text-gray-200 truncate w-40 sm:w-56" dir="auto">${item.text}</span>
-                            <span class="text-[10px] text-gray-500 font-mono mt-0.5">${item.time} • ${item.date}</span>
-                        </div>
-                    </div>
-                    <button onclick="copyText('${item.text}')" class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                `;
-                list.appendChild(li);
-            });
-        }
-
-        function clearHistory() {
-            if(confirm('هل أنت متأكد من مسح كل السجل؟')) {
-                localStorage.removeItem(historyKey);
-                loadHistory();
-                showToast("تم مسح السجل");
+        // --- Actions ---
+        function openResult() {
+            if (currentResult && isValidUrl(currentResult)) {
+                window.open(currentResult, '_blank');
             }
         }
 
         function copyResult() {
-            copyText(document.getElementById('result-text').textContent);
+            if (!currentResult) return;
+            navigator.clipboard.writeText(currentResult).then(() => {
+                showToast("تم النسخ للحافظة");
+            });
+        }
+
+        async function shareResult() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'نتيجة QR',
+                        text: currentResult,
+                    });
+                } catch (err) {
+                    console.log('Share canceled');
+                }
+            } else {
+                copyResult();
+            }
+        }
+
+        // --- Feedback ---
+        function playFeedback() {
+            if (settings.vibrate && navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+            if (settings.sound) {
+                // Simple beep using AudioContext or just no sound for simple web
+                // Using a very short base64 beep for compatibility
+                const beep = new Audio("data:audio/wav;base64,UklGRl9vT1ZQRZFfmt..."); // Shortened for brevity, typically use a real file or AudioContext
+                // Simplified Audio Context Beep
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-[-20px]');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-20px]');
+            }, 3000);
+        }
+
+        // --- Settings & Storage ---
+        function saveSettings() {
+            settings.sound = document.getElementById('setting-sound').checked;
+            settings.vibrate = document.getElementById('setting-vibrate').checked;
+            localStorage.setItem('qr_glass_settings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('qr_glass_settings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                document.getElementById('setting-sound').checked = settings.sound;
+                document.getElementById('setting-vibrate').checked = settings.vibrate;
+            }
+        }
+
+        // --- History ---
+        function addToHistory(item) {
+            let history = JSON.parse(localStorage.getItem('qr_glass_history') || '[]');
+            history.unshift(item);
+            if (history.length > 50) history.pop(); // Limit to 50
+            localStorage.setItem('qr_glass_history', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('qr_glass_history') || '[]');
+            const container = document.getElementById('history-list');
+            const countEl = document.getElementById('history-count');
+            
+            countEl.innerText = `${history.length} عناصر`;
+            container.innerHTML = '';
+
+            if (history.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 mt-10 text-sm">لا يوجد سجل مسح</div>';
+                return;
+            }
+
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'glass-btn p-3 rounded-xl flex items-center justify-between group';
+                
+                // Format date nice
+                const d = new Date(item.date);
+                const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
+
+                const icon = item.isUrl ? 
+                    `<svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>` : 
+                    `<svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="bg-white/10 p-2 rounded-lg shrink-0">
+                            ${icon}
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="text-xs text-white/90 truncate font-mono dir-ltr text-right">${item.text}</span>
+                            <span class="text-[10px] text-gray-400">${dateStr}</span>
+                        </div>
+                    </div>
+                    <button onclick="copyText('${item.text}')" class="p-2 text-gray-400 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
         }
 
         function copyText(text) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => showToast("تم نسخ النص!"));
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-9999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast("تم نسخ النص!");
-                } catch (err) {}
-                document.body.removeChild(textArea);
-            }
+            navigator.clipboard.writeText(text).then(() => showToast('تم النسخ'));
         }
 
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-msg');
-            const iconEl = toast.querySelector('i');
-            
-            msgEl.textContent = message;
-            
-            if (isError) {
-                iconEl.className = 'fa-solid fa-circle-exclamation text-red-400 text-xs';
-                toast.querySelector('div').className = 'w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/50';
-            } else {
-                iconEl.className = 'fa-solid fa-check text-green-400 text-xs';
-                toast.querySelector('div').className = 'w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 border border-green-500/50';
+        function clearHistory() {
+            if(confirm('هل أنت متأكد من مسح السجل بالكامل؟')) {
+                localStorage.removeItem('qr_glass_history');
+                loadHistory();
+                showToast('تم مسح السجل');
             }
-
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        function isValidURL(string) {
-            try { new URL(string); return true; } catch (_) { return false; }
         }
     </script>
 </body>
