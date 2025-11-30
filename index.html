@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Crystal QR | القارئ الذكي</title>
     
     <!-- خط تجوال من جوجل -->
@@ -21,242 +21,345 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
+        :root {
+            --primary-color: #00f2ff; /* سيان مضيء */
+            --bg-deep: #050505;
+            --glass-bg: rgba(20, 20, 20, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
         body {
             font-family: 'Tajawal', sans-serif;
-            background: linear-gradient(45deg, #0f2027, #203a43, #2c5364);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
+            background-color: var(--bg-deep);
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            height: 100vh;
+            width: 100vw;
+            color: #e0e0e0;
+            overflow: hidden;
+            position: fixed;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* التصميم الزجاجي */
+        /* التصميم الزجاجي الداكن المحسن */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.9);
         }
 
         .glass-input {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+            background: rgba(0, 0, 0, 0.8);
         }
 
         .glass-btn {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #aaa;
+            position: relative;
+            overflow: hidden;
         }
 
         .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
         }
 
         .glass-btn.active {
-            background: rgba(59, 130, 246, 0.5); /* لون أزرق شفاف */
-            border-color: rgba(59, 130, 246, 0.8);
+            background: rgba(0, 242, 255, 0.15);
+            border-color: rgba(0, 242, 255, 0.4);
+            color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
         }
-
-        /* تأثيرات الخلفية العائمة */
-        .orb {
+        
+        .glass-btn.active::after {
+            content: '';
             position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            opacity: 0.6;
-        }
-        .orb-1 { top: -50px; left: -50px; width: 300px; height: 300px; background: #7f00ff; animation: float 6s ease-in-out infinite; }
-        .orb-2 { bottom: -50px; right: -50px; width: 250px; height: 250px; background: #00d2ff; animation: float 8s ease-in-out infinite reverse; }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
+            bottom: 0;
+            left: 30%;
+            right: 30%;
+            height: 2px;
+            background: var(--primary-color);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--primary-color);
         }
 
-        /* تخصيص قارئ QR */
-        #reader {
-            border: none !important;
-            border-radius: 1rem;
-            overflow: hidden;
-        }
-        #reader__scan_region {
-            background: transparent !important;
-        }
-        #reader video {
-            border-radius: 1rem;
-            object-fit: cover;
-        }
-
-        /* شريط التمرير المخصص */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
-
-        /* إشعار منبثق */
-        .toast {
-            position: fixed;
-            bottom: 20px;
+        .glow-effect {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, rgba(0,0,0,0) 70%);
+            top: -100px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 255, 127, 0.2);
-            border: 1px solid rgba(0, 255, 127, 0.5);
-            padding: 10px 20px;
-            border-radius: 50px;
-            backdrop-filter: blur(10px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- تخصيص قارئ QR المركزي --- */
+        .scanner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            position: absolute; /* تموضع مطلق لملء الحاوية */
+            top: 0;
+            left: 0;
+            z-index: 10;
+            pointer-events: none; /* للسماح بالنقر على العناصر الأخرى إذا تداخلت */
+        }
+
+        .scanner-wrapper {
+            position: relative;
+            width: min(70vw, 40vh); /* حجم مناسب */
+            height: min(70vw, 40vh);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.85); /* تعتيم الخلفية */
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto; /* إعادة تفعيل النقر داخل المربع */
+        }
+
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            border-radius: 24px;
+        }
+
+        /* الليزر */
+        .scan-laser {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            box-shadow: 0 0 4px var(--primary-color), 0 0 20px var(--primary-color);
+            z-index: 20;
+            animation: scanning 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes scanning {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--primary-color);
+            border-style: solid;
+            border-width: 3px;
+            z-index: 15;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+        }
+        .tl { top: 15px; left: 15px; border-right: 0; border-bottom: 0; }
+        .tr { top: 15px; right: 15px; border-left: 0; border-bottom: 0; }
+        .bl { bottom: 15px; left: 15px; border-right: 0; border-top: 0; }
+        .br { bottom: 15px; right: 15px; border-left: 0; border-top: 0; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             pointer-events: none;
             z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .toast.show { opacity: 1; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .history-item { border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="flex items-center justify-center p-0 sm:p-4">
 
-    <!-- عناصر الخلفية الجمالية -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
+    <div class="glow-effect"></div>
 
-    <!-- الحاوية الرئيسية -->
-    <div class="glass-panel w-full max-w-md rounded-3xl p-6 relative overflow-hidden flex flex-col h-[85vh] md:h-auto md:min-h-[600px]">
+    <div class="glass-panel w-full md:max-w-md flex flex-col h-full sm:h-[90vh] sm:rounded-3xl rounded-none relative overflow-hidden">
         
-        <!-- الرأس -->
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-bold tracking-wider mb-1 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-cube text-blue-400"></i>
-                <span>Crystal QR</span>
-            </h1>
-            <p class="text-gray-300 text-sm opacity-80">ماسح ومولد الرموز الذكي</p>
+        <header class="py-5 px-6 shrink-0 z-20 flex items-center justify-between border-b border-white/5 bg-black/20">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                    <i class="fa-solid fa-qrcode text-cyan-400 text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Crystal QR</h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest">Premium Scanner</p>
+                </div>
+            </div>
+            <button class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 transition-colors">
+                <i class="fa-solid fa-gear"></i>
+            </button>
         </header>
 
-        <!-- التبويبات -->
-        <div class="flex justify-between bg-black/20 p-1 rounded-2xl mb-6">
-            <button onclick="switchTab('scan')" id="tab-scan" class="glass-btn active flex-1 py-2 rounded-xl text-sm font-medium">
-                <i class="fa-solid fa-camera mb-1 block"></i> مسح
-            </button>
-            <button onclick="switchTab('generate')" id="tab-generate" class="glass-btn flex-1 py-2 rounded-xl text-sm font-medium mx-2">
-                <i class="fa-solid fa-qrcode mb-1 block"></i> توليد
-            </button>
-            <button onclick="switchTab('history')" id="tab-history" class="glass-btn flex-1 py-2 rounded-xl text-sm font-medium">
-                <i class="fa-solid fa-clock-rotate-left mb-1 block"></i> السجل
-            </button>
+        <div class="px-6 shrink-0 z-20 pt-6 pb-2">
+            <div class="flex justify-between bg-black/40 p-1.5 rounded-xl border border-white/5 shadow-inner shadow-black/50">
+                <button onclick="switchTab('scan')" id="tab-scan" class="glass-btn active flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
+                    مسح
+                </button>
+                <button onclick="switchTab('generate')" id="tab-generate" class="glass-btn flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
+                    إنشاء
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="glass-btn flex-1 py-2.5 rounded-lg text-sm font-medium mx-0.5">
+                    السجل
+                </button>
+            </div>
         </div>
 
-        <!-- المحتوى -->
-        <main class="flex-1 overflow-y-auto relative custom-scrollbar">
+        <main class="flex-1 relative w-full overflow-hidden flex flex-col">
             
-            <!-- قسم المسح -->
-            <div id="view-scan" class="view-section transition-opacity duration-300">
-                <div class="glass-panel rounded-2xl p-2 mb-4 bg-black/30">
-                    <div id="reader" class="w-full"></div>
+            <!-- ====== قسم المسح ====== -->
+            <!-- جعلت الحاوية relative بالكامل لتمركز العناصر -->
+            <div id="view-scan" class="view-section transition-all duration-500 w-full h-full relative">
+                
+                <!-- تعليمات المسح (مثبتة في الأعلى) -->
+                <div class="absolute top-8 left-0 right-0 flex justify-center z-20 pointer-events-none transition-opacity duration-300" id="scan-instruction-container">
+                    <p id="scan-instruction" class="text-xs text-cyan-300/70 bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-cyan-500/10 animate-pulse shadow-lg">
+                        <i class="fa-solid fa-expand mr-1"></i> وجه الكاميرا نحو الرمز
+                    </p>
                 </div>
-                <div id="scan-result" class="hidden glass-panel p-4 rounded-xl mt-4 text-center border-green-500/30 border">
-                    <p class="text-xs text-gray-400 mb-2">تم اكتشاف الرمز:</p>
-                    <p id="result-text" class="text-lg font-bold text-green-300 break-all mb-3">...</p>
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="copyResult()" class="glass-btn px-4 py-2 rounded-lg text-sm hover:text-white">
-                            <i class="fa-regular fa-copy"></i> نسخ
-                        </button>
-                        <a id="result-link" href="#" target="_blank" class="glass-btn px-4 py-2 rounded-lg text-sm text-blue-300 hover:text-blue-100 hidden">
-                            <i class="fa-solid fa-external-link-alt"></i> فتح
-                        </a>
+
+                <!-- حاوية الماسح (في المنتصف تماماً) -->
+                <div class="scanner-container">
+                    <div class="scanner-wrapper">
+                        <div class="scan-laser"></div>
+                        <div class="corner tl"></div> <div class="corner tr"></div>
+                        <div class="corner bl"></div> <div class="corner br"></div>
+                        <div id="reader"></div>
                     </div>
                 </div>
-                <p class="text-center text-xs text-gray-400 mt-4 animate-pulse">
-                    <i class="fa-solid fa-arrows-to-eye"></i> وجه الكاميرا نحو الرمز
-                </p>
+
+                <!-- نتيجة المسح (مثبتة في الأسفل) -->
+                <div id="scan-result" class="hidden absolute bottom-6 left-6 right-6 glass-panel p-5 rounded-2xl border-l-4 border-l-cyan-500 z-30 animate-fade-in-up bg-black/80 backdrop-blur-xl">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <p class="text-xs text-gray-400 mb-1">المحتوى الممسوح</p>
+                            <p id="result-text" class="text-base font-semibold text-white break-all line-clamp-2">...</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="copyResult()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors" title="نسخ">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button onclick="resetScan()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors" title="مسح جديد">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <a id="result-link" href="#" target="_blank" class="w-full py-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 border border-cyan-500/30 flex items-center justify-center gap-2 text-sm font-bold transition-all hidden group">
+                        <span>فتح الرابط</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square group-hover:translate-x-[-2px] group-hover:-translate-y-[2px] transition-transform"></i>
+                    </a>
+                </div>
             </div>
 
-            <!-- قسم التوليد -->
-            <div id="view-generate" class="view-section hidden">
-                <div class="flex flex-col gap-4">
-                    <div class="relative">
-                        <textarea id="qr-input" placeholder="اكتب نصاً أو رابطاً هنا..." 
-                            class="glass-input w-full p-4 rounded-xl resize-none h-32 focus:outline-none focus:border-blue-400 transition-colors"></textarea>
-                        <i class="fa-solid fa-pen absolute left-4 bottom-4 text-gray-500"></i>
+            <!-- ====== قسم التوليد ====== -->
+            <div id="view-generate" class="view-section hidden h-full overflow-y-auto px-6 py-2">
+                <div class="flex flex-col gap-5 pt-4">
+                    <div class="relative group">
+                        <textarea id="qr-input" placeholder="أدخل النص أو الرابط هنا..." 
+                            class="glass-input w-full p-5 rounded-2xl resize-none h-40 text-sm focus:outline-none placeholder-gray-500 text-gray-200 shadow-xl"></textarea>
+                        <div class="absolute bottom-4 left-4 flex gap-2">
+                             <i class="fa-solid fa-keyboard text-gray-600"></i>
+                        </div>
                     </div>
                     
-                    <button onclick="generateQR()" class="glass-btn bg-blue-600/20 w-full py-3 rounded-xl font-bold hover:bg-blue-600/40">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> توليد الرمز
+                    <button onclick="generateQR()" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-lg shadow-cyan-900/20 hover:shadow-cyan-900/40 hover:scale-[1.02] transition-all active:scale-[0.98]">
+                        <i class="fa-solid fa-wand-magic-sparkles ml-2"></i> إنشاء الرمز
                     </button>
 
-                    <div id="qr-output-container" class="hidden flex flex-col items-center mt-4 p-6 glass-panel rounded-2xl bg-white/5">
-                        <div id="qrcode" class="p-2 bg-white rounded-lg"></div>
-                        <p class="text-xs text-gray-400 mt-3">تم إنشاء الرمز بنجاح</p>
+                    <div id="qr-output-container" class="hidden flex flex-col items-center mt-2 p-8 glass-panel rounded-3xl bg-black/40 border border-white/5 animate-fade-in-up">
+                        <div class="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                            <div id="qrcode"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-6 flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+                            <i class="fa-solid fa-circle-check text-green-500"></i> تم الإنشاء بنجاح
+                        </p>
                     </div>
+                    <div class="h-20"></div>
                 </div>
             </div>
 
-            <!-- قسم السجل -->
-            <div id="view-history" class="view-section hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg">أحدث العمليات</h3>
-                    <button onclick="clearHistory()" class="text-xs text-red-300 hover:text-red-100 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
-                        <i class="fa-solid fa-trash"></i> مسح الكل
+            <!-- ====== قسم السجل ====== -->
+            <div id="view-history" class="view-section hidden h-full overflow-y-auto px-6 py-2">
+                <div class="flex justify-between items-center mb-6 sticky top-0 bg-[#050505]/80 backdrop-blur-md py-3 z-10 border-b border-white/5">
+                    <h3 class="font-bold text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-timeline text-gray-500"></i> العمليات السابقة
+                    </h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 px-3 py-1.5 rounded-lg border border-red-500/20 transition-all">
+                        مسح الكل
                     </button>
                 </div>
-                <ul id="history-list" class="space-y-3">
-                    <!-- سيتم ملء العناصر هنا بواسطة JS -->
-                    <li class="text-center text-gray-500 py-8 italic">لا يوجد سجل محفوظ</li>
+                <ul id="history-list" class="space-y-3 pb-20">
+                    <!-- العناصر -->
                 </ul>
             </div>
 
         </main>
         
-        <!-- التذييل -->
-        <footer class="mt-4 text-center border-t border-white/10 pt-4">
-            <p class="text-[10px] text-gray-400">© 2023 Crystal QR Pro. صمم بأناقة.</p>
+        <footer class="text-center py-3 shrink-0 z-20 bg-black/40 backdrop-blur-md text-gray-600 border-t border-white/5 text-[10px] tracking-wider">
+            CRYSTAL QR PRO &copy; 2023
         </footer>
     </div>
 
-    <!-- عنصر الصوت -->
     <audio id="scan-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
-    <!-- عنصر التوست -->
-    <div id="toast" class="toast flex items-center gap-2">
-        <i class="fa-solid fa-check-circle text-green-400"></i>
-        <span id="toast-msg" class="text-sm font-bold">تم بنجاح!</span>
+    <div id="toast" class="toast">
+        <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 border border-green-500/50">
+            <i class="fa-solid fa-check text-green-400 text-xs"></i>
+        </div>
+        <span id="toast-msg" class="text-sm font-medium text-white">تم بنجاح!</span>
     </div>
 
     <script>
-        // المتغيرات العامة
         let html5QrcodeScanner = null;
         const historyKey = 'crystal_qr_history';
         const scanSound = document.getElementById('scan-sound');
 
-        // تهيئة التطبيق عند التحميل
         document.addEventListener('DOMContentLoaded', () => {
             loadHistory();
-            startScanner();
+            setTimeout(startScanner, 300);
         });
 
-        // --- منطق التبويبات ---
         function switchTab(tabName) {
-            // إخفاء كل الأقسام
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.glass-btn').forEach(el => el.classList.remove('active'));
-
-            // إظهار القسم المطلوب
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
             document.getElementById(`tab-${tabName}`).classList.add('active');
 
-            // التحكم في الماسح الضوئي لتوفير الموارد
             if (tabName === 'scan') {
                 startScanner();
             } else {
@@ -264,13 +367,21 @@
             }
         }
 
-        // --- منطق الماسح الضوئي ---
         function startScanner() {
-            if (html5QrcodeScanner) return; // يعمل بالفعل
+            if (html5QrcodeScanner) return;
 
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            // تقليل الحجم قليلاً لضمان عدم ملامسة الحواف في جميع الشاشات
+            const qrboxSize = Math.min(width, height) * 0.65;
+
+            const config = { 
+                fps: 10, 
+                qrbox: { width: qrboxSize, height: qrboxSize },
+                aspectRatio: 1.0,
+                disableFlip: false
+            };
             
-            // تهيئة html5-qrcode
             const html5QrCode = new Html5Qrcode("reader");
             
             html5QrCode.start(
@@ -280,15 +391,33 @@
                 onScanFailure
             ).then(() => {
                 html5QrcodeScanner = html5QrCode;
+                fixVideoDisplay();
             }).catch(err => {
                 console.error("Error starting scanner", err);
-                // ربما الجهاز ليس به كاميرا أو الإذن مرفوض
-                document.getElementById('reader').innerHTML = `
-                    <div class="text-center p-4 text-red-300">
-                        <i class="fa-solid fa-camera-slash text-3xl mb-2"></i><br>
-                        يرجى السماح بالوصول للكاميرا أو التأكد من توفرها.
-                    </div>`;
+                renderCameraError();
             });
+        }
+
+        function fixVideoDisplay() {
+            const observer = new MutationObserver(() => {
+                const video = document.querySelector('#reader video');
+                if(video) {
+                    video.style.objectFit = "cover";
+                    video.style.width = "100%";
+                    video.style.height = "100%";
+                    video.style.borderRadius = "24px";
+                }
+            });
+            observer.observe(document.getElementById('reader'), { childList: true, subtree: true });
+        }
+
+        function renderCameraError() {
+            document.getElementById('reader').innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 bg-white/5">
+                    <i class="fa-solid fa-camera-slash text-3xl mb-3 text-red-400 opacity-80"></i>
+                    <p class="text-sm font-medium">تعذر الوصول للكاميرا</p>
+                    <p class="text-xs mt-2 opacity-60">تأكد من منح الأذونات</p>
+                </div>`;
         }
 
         function stopScanner() {
@@ -301,85 +430,101 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            // تشغيل صوت
-            scanSound.play().catch(e => console.log("Audio play failed"));
+            scanSound.play().catch(e => {});
             
-            // إظهار النتيجة
             const resultDiv = document.getElementById('scan-result');
             const resultText = document.getElementById('result-text');
             const resultLink = document.getElementById('result-link');
+            const instructionContainer = document.getElementById('scan-instruction-container');
+            const scannerContainer = document.querySelector('.scanner-container');
 
             resultDiv.classList.remove('hidden');
+            // إخفاء التعليمات
+            if(instructionContainer) instructionContainer.style.opacity = '0';
+            
             resultText.textContent = decodedText;
-
-            // التحقق مما إذا كان رابطاً
+            
+            // جعل القارئ نصف شفاف للتركيز على النتيجة
+            scannerContainer.style.opacity = '0.3';
+            scannerContainer.style.pointerEvents = 'none';
+            
             if (isValidURL(decodedText)) {
                 resultLink.href = decodedText;
                 resultLink.classList.remove('hidden');
+                resultLink.classList.add('flex');
             } else {
                 resultLink.classList.add('hidden');
+                resultLink.classList.remove('flex');
             }
 
-            // الحفظ في السجل
             addToHistory(decodedText, 'scan');
+            showToast("تم قراءة الرمز!");
             
-            // إشعار
-            showToast("تم مسح الرمز بنجاح");
-            
-            // إيقاف المسح مؤقتاً لتجنب التكرار السريع
             if(html5QrcodeScanner) {
                  html5QrcodeScanner.pause();
-                 setTimeout(() => html5QrcodeScanner.resume(), 2000);
             }
         }
 
-        function onScanFailure(error) {
-            // يمكن تجاهل الأخطاء أثناء المسح المستمر
+        function resetScan() {
+             const resultDiv = document.getElementById('scan-result');
+             const instructionContainer = document.getElementById('scan-instruction-container');
+             const scannerContainer = document.querySelector('.scanner-container');
+
+             resultDiv.classList.add('hidden');
+             if(instructionContainer) instructionContainer.style.opacity = '1';
+             
+             scannerContainer.style.opacity = '1';
+             scannerContainer.style.pointerEvents = 'auto';
+
+             if(html5QrcodeScanner) {
+                 html5QrcodeScanner.resume();
+             }
         }
 
-        // --- منطق التوليد ---
+        function onScanFailure(error) {}
+
         function generateQR() {
             const input = document.getElementById('qr-input').value;
             const container = document.getElementById('qr-output-container');
             const qrDiv = document.getElementById('qrcode');
 
             if (!input.trim()) {
-                showToast("الرجاء إدخال نص أولاً!");
+                showToast("يرجى كتابة نص أولاً", true);
                 return;
             }
 
-            // تنظيف القديم
             qrDiv.innerHTML = "";
             container.classList.remove('hidden');
 
-            // إنشاء الباركود
             new QRCode(qrDiv, {
                 text: input,
-                width: 180,
-                height: 180,
+                width: 200,
+                height: 200,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
 
             addToHistory(input, 'create');
+            
+            setTimeout(() => {
+                container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
         }
 
-        // --- منطق السجل ---
         function addToHistory(text, type) {
             let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            if (history.length > 0 && history[0].text === text && history[0].type === type) return;
+
             const newItem = {
                 text: text,
-                type: type, // 'scan' or 'create'
+                type: type,
                 date: new Date().toLocaleDateString('ar-EG'),
                 time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
             };
             
-            // إضافة للبداية
             history.unshift(newItem);
-            // الاحتفاظ بآخر 10 عناصر فقط
-            if(history.length > 10) history.pop();
-            
+            if(history.length > 20) history.pop();
             localStorage.setItem(historyKey, JSON.stringify(history));
             loadHistory();
         }
@@ -389,32 +534,38 @@
             const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
 
             if (history.length === 0) {
-                list.innerHTML = `<li class="text-center text-gray-400 py-8 bg-black/10 rounded-xl border border-white/5 flex flex-col items-center gap-2">
-                    <i class="fa-solid fa-box-open text-2xl opacity-50"></i>
-                    <span>لا يوجد سجل محفوظ</span>
+                list.innerHTML = `<li class="text-center py-16 flex flex-col items-center gap-4 opacity-40">
+                    <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
+                        <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-400"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">سجل العمليات فارغ</span>
                 </li>`;
                 return;
             }
 
             list.innerHTML = '';
-            history.forEach(item => {
-                const icon = item.type === 'scan' ? 'fa-eye' : 'fa-pen-to-square';
-                const color = item.type === 'scan' ? 'text-green-400' : 'text-blue-400';
+            history.forEach((item, index) => {
+                const isScan = item.type === 'scan';
+                const icon = isScan ? 'fa-eye' : 'fa-wand-magic-sparkles';
+                const colorClass = isScan ? 'text-cyan-400' : 'text-purple-400';
+                const bgClass = isScan ? 'bg-cyan-500/10' : 'bg-purple-500/10';
                 
                 const li = document.createElement('li');
-                li.className = 'glass-panel p-3 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-colors';
+                li.className = 'history-item glass-panel p-4 rounded-xl flex items-center justify-between group hover:bg-white/5 transition-all animate-fade-in border-transparent hover:border-white/10';
+                li.style.animationDelay = `${index * 50}ms`;
+                
                 li.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                            <i class="fa-solid ${icon} ${color} text-xs"></i>
+                    <div class="flex items-center gap-4 overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center shrink-0 border border-white/5">
+                            <i class="fa-solid ${icon} ${colorClass} text-sm"></i>
                         </div>
                         <div class="flex flex-col overflow-hidden">
-                            <span class="text-sm truncate font-medium text-white/90 w-48">${item.text}</span>
-                            <span class="text-[10px] text-gray-400">${item.time} • ${item.date}</span>
+                            <span class="text-sm font-medium text-gray-200 truncate w-40 sm:w-56" dir="auto">${item.text}</span>
+                            <span class="text-[10px] text-gray-500 font-mono mt-0.5">${item.time} • ${item.date}</span>
                         </div>
                     </div>
-                    <button onclick="copyText('${item.text}')" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors">
-                        <i class="fa-regular fa-copy text-sm"></i>
+                    <button onclick="copyText('${item.text}')" class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                        <i class="fa-regular fa-copy"></i>
                     </button>
                 `;
                 list.appendChild(li);
@@ -422,23 +573,21 @@
         }
 
         function clearHistory() {
-            localStorage.removeItem(historyKey);
-            loadHistory();
-            showToast("تم مسح السجل");
+            if(confirm('هل أنت متأكد من مسح كل السجل؟')) {
+                localStorage.removeItem(historyKey);
+                loadHistory();
+                showToast("تم مسح السجل");
+            }
         }
 
-        // --- أدوات مساعدة ---
         function copyResult() {
-            const text = document.getElementById('result-text').textContent;
-            copyText(text);
+            copyText(document.getElementById('result-text').textContent);
         }
 
         function copyText(text) {
-            // محاولة النسخ الحديثة والقديمة
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => showToast("تم نسخ النص!"));
             } else {
-                // طريقة بديلة للمتصفحات القديمة
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
                 textArea.style.position = "fixed";
@@ -449,28 +598,32 @@
                 try {
                     document.execCommand('copy');
                     showToast("تم نسخ النص!");
-                } catch (err) {
-                    console.error('Unable to copy', err);
-                }
+                } catch (err) {}
                 document.body.removeChild(textArea);
             }
         }
 
-        function showToast(message) {
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-msg');
+            const iconEl = toast.querySelector('i');
+            
             msgEl.textContent = message;
+            
+            if (isError) {
+                iconEl.className = 'fa-solid fa-circle-exclamation text-red-400 text-xs';
+                toast.querySelector('div').className = 'w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/50';
+            } else {
+                iconEl.className = 'fa-solid fa-check text-green-400 text-xs';
+                toast.querySelector('div').className = 'w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0 border border-green-500/50';
+            }
+
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
         function isValidURL(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;  
-            }
+            try { new URL(string); return true; } catch (_) { return false; }
         }
     </script>
 </body>
