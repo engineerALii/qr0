@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal QR | القارئ الذكي</title>
+    
+    <!-- خط تجوال من جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- مكتبة Tailwind CSS للتنسيق -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- مكتبة FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- مكتبة HTML5-QRCode للمسح -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <!-- مكتبة QRCode.js للتوليد -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(45deg, #0f2027, #203a43, #2c5364);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* التصميم الزجاجي */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(4px);
+        }
+
+        .glass-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-btn.active {
+            background: rgba(59, 130, 246, 0.5); /* لون أزرق شفاف */
+            border-color: rgba(59, 130, 246, 0.8);
+        }
+
+        /* تأثيرات الخلفية العائمة */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+        }
+        .orb-1 { top: -50px; left: -50px; width: 300px; height: 300px; background: #7f00ff; animation: float 6s ease-in-out infinite; }
+        .orb-2 { bottom: -50px; right: -50px; width: 250px; height: 250px; background: #00d2ff; animation: float 8s ease-in-out infinite reverse; }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* تخصيص قارئ QR */
+        #reader {
+            border: none !important;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        #reader__scan_region {
+            background: transparent !important;
+        }
+        #reader video {
+            border-radius: 1rem;
+            object-fit: cover;
+        }
+
+        /* شريط التمرير المخصص */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        /* إشعار منبثق */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 127, 0.2);
+            border: 1px solid rgba(0, 255, 127, 0.5);
+            padding: 10px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <!-- عناصر الخلفية الجمالية -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- الحاوية الرئيسية -->
+    <div class="glass-panel w-full max-w-md rounded-3xl p-6 relative overflow-hidden flex flex-col h-[85vh] md:h-auto md:min-h-[600px]">
+        
+        <!-- الرأس -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold tracking-wider mb-1 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-cube text-blue-400"></i>
+                <span>Crystal QR</span>
+            </h1>
+            <p class="text-gray-300 text-sm opacity-80">ماسح ومولد الرموز الذكي</p>
+        </header>
+
+        <!-- التبويبات -->
+        <div class="flex justify-between bg-black/20 p-1 rounded-2xl mb-6">
+            <button onclick="switchTab('scan')" id="tab-scan" class="glass-btn active flex-1 py-2 rounded-xl text-sm font-medium">
+                <i class="fa-solid fa-camera mb-1 block"></i> مسح
+            </button>
+            <button onclick="switchTab('generate')" id="tab-generate" class="glass-btn flex-1 py-2 rounded-xl text-sm font-medium mx-2">
+                <i class="fa-solid fa-qrcode mb-1 block"></i> توليد
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="glass-btn flex-1 py-2 rounded-xl text-sm font-medium">
+                <i class="fa-solid fa-clock-rotate-left mb-1 block"></i> السجل
+            </button>
+        </div>
+
+        <!-- المحتوى -->
+        <main class="flex-1 overflow-y-auto relative custom-scrollbar">
+            
+            <!-- قسم المسح -->
+            <div id="view-scan" class="view-section transition-opacity duration-300">
+                <div class="glass-panel rounded-2xl p-2 mb-4 bg-black/30">
+                    <div id="reader" class="w-full"></div>
+                </div>
+                <div id="scan-result" class="hidden glass-panel p-4 rounded-xl mt-4 text-center border-green-500/30 border">
+                    <p class="text-xs text-gray-400 mb-2">تم اكتشاف الرمز:</p>
+                    <p id="result-text" class="text-lg font-bold text-green-300 break-all mb-3">...</p>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="copyResult()" class="glass-btn px-4 py-2 rounded-lg text-sm hover:text-white">
+                            <i class="fa-regular fa-copy"></i> نسخ
+                        </button>
+                        <a id="result-link" href="#" target="_blank" class="glass-btn px-4 py-2 rounded-lg text-sm text-blue-300 hover:text-blue-100 hidden">
+                            <i class="fa-solid fa-external-link-alt"></i> فتح
+                        </a>
+                    </div>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-4 animate-pulse">
+                    <i class="fa-solid fa-arrows-to-eye"></i> وجه الكاميرا نحو الرمز
+                </p>
+            </div>
+
+            <!-- قسم التوليد -->
+            <div id="view-generate" class="view-section hidden">
+                <div class="flex flex-col gap-4">
+                    <div class="relative">
+                        <textarea id="qr-input" placeholder="اكتب نصاً أو رابطاً هنا..." 
+                            class="glass-input w-full p-4 rounded-xl resize-none h-32 focus:outline-none focus:border-blue-400 transition-colors"></textarea>
+                        <i class="fa-solid fa-pen absolute left-4 bottom-4 text-gray-500"></i>
+                    </div>
+                    
+                    <button onclick="generateQR()" class="glass-btn bg-blue-600/20 w-full py-3 rounded-xl font-bold hover:bg-blue-600/40">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> توليد الرمز
+                    </button>
+
+                    <div id="qr-output-container" class="hidden flex flex-col items-center mt-4 p-6 glass-panel rounded-2xl bg-white/5">
+                        <div id="qrcode" class="p-2 bg-white rounded-lg"></div>
+                        <p class="text-xs text-gray-400 mt-3">تم إنشاء الرمز بنجاح</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم السجل -->
+            <div id="view-history" class="view-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg">أحدث العمليات</h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-300 hover:text-red-100 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                        <i class="fa-solid fa-trash"></i> مسح الكل
+                    </button>
+                </div>
+                <ul id="history-list" class="space-y-3">
+                    <!-- سيتم ملء العناصر هنا بواسطة JS -->
+                    <li class="text-center text-gray-500 py-8 italic">لا يوجد سجل محفوظ</li>
+                </ul>
+            </div>
+
+        </main>
+        
+        <!-- التذييل -->
+        <footer class="mt-4 text-center border-t border-white/10 pt-4">
+            <p class="text-[10px] text-gray-400">© 2023 Crystal QR Pro. صمم بأناقة.</p>
+        </footer>
+    </div>
+
+    <!-- عنصر الصوت -->
+    <audio id="scan-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <!-- عنصر التوست -->
+    <div id="toast" class="toast flex items-center gap-2">
+        <i class="fa-solid fa-check-circle text-green-400"></i>
+        <span id="toast-msg" class="text-sm font-bold">تم بنجاح!</span>
+    </div>
+
+    <script>
+        // المتغيرات العامة
+        let html5QrcodeScanner = null;
+        const historyKey = 'crystal_qr_history';
+        const scanSound = document.getElementById('scan-sound');
+
+        // تهيئة التطبيق عند التحميل
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            startScanner();
+        });
+
+        // --- منطق التبويبات ---
+        function switchTab(tabName) {
+            // إخفاء كل الأقسام
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.glass-btn').forEach(el => el.classList.remove('active'));
+
+            // إظهار القسم المطلوب
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // التحكم في الماسح الضوئي لتوفير الموارد
+            if (tabName === 'scan') {
+                startScanner();
+            } else {
+                stopScanner();
+            }
+        }
+
+        // --- منطق الماسح الضوئي ---
+        function startScanner() {
+            if (html5QrcodeScanner) return; // يعمل بالفعل
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            // تهيئة html5-qrcode
+            const html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                onScanSuccess,
+                onScanFailure
+            ).then(() => {
+                html5QrcodeScanner = html5QrCode;
+            }).catch(err => {
+                console.error("Error starting scanner", err);
+                // ربما الجهاز ليس به كاميرا أو الإذن مرفوض
+                document.getElementById('reader').innerHTML = `
+                    <div class="text-center p-4 text-red-300">
+                        <i class="fa-solid fa-camera-slash text-3xl mb-2"></i><br>
+                        يرجى السماح بالوصول للكاميرا أو التأكد من توفرها.
+                    </div>`;
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }).catch(err => console.log("Stop failed", err));
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // تشغيل صوت
+            scanSound.play().catch(e => console.log("Audio play failed"));
+            
+            // إظهار النتيجة
+            const resultDiv = document.getElementById('scan-result');
+            const resultText = document.getElementById('result-text');
+            const resultLink = document.getElementById('result-link');
+
+            resultDiv.classList.remove('hidden');
+            resultText.textContent = decodedText;
+
+            // التحقق مما إذا كان رابطاً
+            if (isValidURL(decodedText)) {
+                resultLink.href = decodedText;
+                resultLink.classList.remove('hidden');
+            } else {
+                resultLink.classList.add('hidden');
+            }
+
+            // الحفظ في السجل
+            addToHistory(decodedText, 'scan');
+            
+            // إشعار
+            showToast("تم مسح الرمز بنجاح");
+            
+            // إيقاف المسح مؤقتاً لتجنب التكرار السريع
+            if(html5QrcodeScanner) {
+                 html5QrcodeScanner.pause();
+                 setTimeout(() => html5QrcodeScanner.resume(), 2000);
+            }
+        }
+
+        function onScanFailure(error) {
+            // يمكن تجاهل الأخطاء أثناء المسح المستمر
+        }
+
+        // --- منطق التوليد ---
+        function generateQR() {
+            const input = document.getElementById('qr-input').value;
+            const container = document.getElementById('qr-output-container');
+            const qrDiv = document.getElementById('qrcode');
+
+            if (!input.trim()) {
+                showToast("الرجاء إدخال نص أولاً!");
+                return;
+            }
+
+            // تنظيف القديم
+            qrDiv.innerHTML = "";
+            container.classList.remove('hidden');
+
+            // إنشاء الباركود
+            new QRCode(qrDiv, {
+                text: input,
+                width: 180,
+                height: 180,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            addToHistory(input, 'create');
+        }
+
+        // --- منطق السجل ---
+        function addToHistory(text, type) {
+            let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            const newItem = {
+                text: text,
+                type: type, // 'scan' or 'create'
+                date: new Date().toLocaleDateString('ar-EG'),
+                time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
+            };
+            
+            // إضافة للبداية
+            history.unshift(newItem);
+            // الاحتفاظ بآخر 10 عناصر فقط
+            if(history.length > 10) history.pop();
+            
+            localStorage.setItem(historyKey, JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+
+            if (history.length === 0) {
+                list.innerHTML = `<li class="text-center text-gray-400 py-8 bg-black/10 rounded-xl border border-white/5 flex flex-col items-center gap-2">
+                    <i class="fa-solid fa-box-open text-2xl opacity-50"></i>
+                    <span>لا يوجد سجل محفوظ</span>
+                </li>`;
+                return;
+            }
+
+            list.innerHTML = '';
+            history.forEach(item => {
+                const icon = item.type === 'scan' ? 'fa-eye' : 'fa-pen-to-square';
+                const color = item.type === 'scan' ? 'text-green-400' : 'text-blue-400';
+                
+                const li = document.createElement('li');
+                li.className = 'glass-panel p-3 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-colors';
+                li.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${icon} ${color} text-xs"></i>
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="text-sm truncate font-medium text-white/90 w-48">${item.text}</span>
+                            <span class="text-[10px] text-gray-400">${item.time} • ${item.date}</span>
+                        </div>
+                    </div>
+                    <button onclick="copyText('${item.text}')" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center text-gray-300 transition-colors">
+                        <i class="fa-regular fa-copy text-sm"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem(historyKey);
+            loadHistory();
+            showToast("تم مسح السجل");
+        }
+
+        // --- أدوات مساعدة ---
+        function copyResult() {
+            const text = document.getElementById('result-text').textContent;
+            copyText(text);
+        }
+
+        function copyText(text) {
+            // محاولة النسخ الحديثة والقديمة
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast("تم نسخ النص!"));
+            } else {
+                // طريقة بديلة للمتصفحات القديمة
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("تم نسخ النص!");
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            msgEl.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function isValidURL(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;  
+            }
+        }
+    </script>
+</body>
+</html>
