@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>الماسح الزجاجي | Glass QR</title>
-    <meta name="description" content="قارئ QR عصري، سريع، وآمن يعمل على الهاتف.">
+    <title>ماسح الشتاء | Winter Scanner</title>
     
-    <!-- Google Fonts: Cairo -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- الخطوط العربية (Cairo) -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
+    <!-- مكتبة Tailwind CSS للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- QR Scanner Library -->
+    <!-- مكتبة FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- مكتبة QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <!-- Config & Styles -->
+    <!-- تخصيصات Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -26,641 +26,467 @@
                         sans: ['Cairo', 'sans-serif'],
                     },
                     colors: {
-                        glass: {
-                            100: 'rgba(255, 255, 255, 0.1)',
-                            200: 'rgba(255, 255, 255, 0.2)',
-                            300: 'rgba(255, 255, 255, 0.3)',
-                            dark: 'rgba(0, 0, 0, 0.3)',
-                        },
-                        primary: '#10b981', // Emerald 500
+                        ice: '#e0f2fe',
+                        frost: 'rgba(255, 255, 255, 0.05)', // تم تخفيف الشفافية للوضع الداكن
+                        deepBlue: '#020617' // لون أغمق
                     },
-                    backdropBlur: {
-                        xs: '2px',
+                    animation: {
+                        'scan-line': 'scan 2s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        scan: {
+                            '0%': { top: '0%' },
+                            '50%': { top: '100%' },
+                            '100%': { top: '0%' },
+                        }
                     }
                 }
             }
         }
     </script>
-    
+
     <style>
+        /* إعدادات الخلفية الشتوية الداكنة */
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #115e59 100%);
-            background-attachment: fixed;
-            color: #ffffff;
+            /* تدرج لوني داكن جداً ليعطي طابع الليل الشتوي */
+            background: linear-gradient(to bottom, #000000, #0f172a, #1e293b);
+            overflow-x: hidden;
+            touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Glassmorphism Classes */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        /* تأثير الثلج */
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            color: rgba(255, 255, 255, 0.7); /* تقليل سطوع الثلج قليلاً */
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+            animation: fall linear forwards;
         }
 
-        .glass-btn {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.2s ease;
+        @keyframes fall {
+            to {
+                transform: translateY(105vh);
+            }
         }
 
-        .glass-btn:active {
-            transform: scale(0.96);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        /* Hide Scrollbar but keep functionality */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Scanner Overlay Customization */
+        /* تنسيق منطقة الماسح - مربع كامل */
         #reader {
-            border-radius: 1.5rem;
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 1rem;
             overflow: hidden;
-            width: 100%;
+            position: relative;
         }
+        
         #reader video {
-            object-fit: cover;
-            border-radius: 1.5rem;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important; /* ملء المربع بالكامل */
+            border-radius: 1rem;
         }
-        /* Hide html5-qrcode default elements */
+
+        /* إخفاء عناصر المكتبة الافتراضية غير المرغوبة */
         #reader__dashboard_section_csr span, 
         #reader__dashboard_section_swaplink {
             display: none !important;
         }
+
+        /* تأثير الزجاج الداكن (Dark Glassmorphism) */
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.4); /* خلفية سوداء شفافة */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08); /* حدود خفيفة جداً */
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* زر الفلاش */
+        .action-btn {
+            transition: all 0.3s ease;
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
-<body class="h-screen w-full overflow-hidden flex flex-col items-center justify-center font-sans antialiased">
+<body class="min-h-screen text-slate-200 flex flex-col items-center justify-start py-8 px-4 relative">
 
-    <!-- Background Orbs for aesthetic -->
-    <div class="fixed top-[-10%] left-[-10%] w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-    <div class="fixed top-[20%] right-[-10%] w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-    <div class="fixed bottom-[-10%] left-[20%] w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    <!-- حاوية الثلوج -->
+    <div id="snow-container"></div>
 
-    <!-- MAIN APP CONTAINER -->
-    <main id="app" class="relative w-full max-w-md h-full max-h-[900px] flex flex-col p-4 z-10 transition-all duration-300">
+    <!-- العنوان -->
+    <header class="z-10 text-center mb-8 animate-fade-in-down">
+        <div class="inline-block p-3 rounded-full glass-panel mb-2 border border-cyan-900/30">
+            <i class="fa-solid fa-snowflake text-2xl text-cyan-500 animate-spin-slow"></i>
+        </div>
+        <p class="text-slate-400 text-sm mt-1 font-light tracking-wide">امسح الكود ضوئياً</p>
+    </header>
+
+    <!-- البطاقة الرئيسية -->
+    <main class="w-full max-w-sm glass-panel rounded-3xl p-5 z-10 flex flex-col gap-6 shadow-2xl relative">
         
-        <!-- HEADER -->
-        <header class="flex justify-between items-center mb-6 px-2">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
+        <!-- منطقة الكاميرا (مربع كامل) -->
+        <div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/5 group">
+            
+            <!-- وعاء مكتبة QR -->
+            <div id="reader" class="w-full h-full"></div>
+
+            <!-- خط المسح الليزري -->
+            <div id="scan-laser" class="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent shadow-[0_0_20px_rgba(6,182,212,0.9)] z-20 hidden animate-scan-line"></div>
+            
+            <!-- حالة الكاميرا (عندما تكون مغلقة) -->
+            <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10 bg-black/80 backdrop-blur-sm">
+                <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 animate-pulse">
+                    <i class="fa-solid fa-camera text-3xl text-white/40"></i>
                 </div>
-                <span class="font-bold text-lg tracking-wide">الماسح الزجاجي</span>
+                <button onclick="startScanner()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-full shadow-lg shadow-cyan-900/50 transition-all font-semibold active:scale-95 tracking-wide">
+                    تشغيل الماسح
+                </button>
             </div>
-            <button onclick="showPage('settings')" class="glass-btn p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+
+            <!-- أركان التحديد (زوايا المربع - تم جعلها أكثر دقة) -->
+            <div class="absolute top-5 left-5 w-6 h-6 border-t-2 border-l-2 border-cyan-500/80 rounded-tl-lg z-20 pointer-events-none"></div>
+            <div class="absolute top-5 right-5 w-6 h-6 border-t-2 border-r-2 border-cyan-500/80 rounded-tr-lg z-20 pointer-events-none"></div>
+            <div class="absolute bottom-5 left-5 w-6 h-6 border-b-2 border-l-2 border-cyan-500/80 rounded-bl-lg z-20 pointer-events-none"></div>
+            <div class="absolute bottom-5 right-5 w-6 h-6 border-b-2 border-r-2 border-cyan-500/80 rounded-br-lg z-20 pointer-events-none"></div>
+        </div>
+
+        <!-- أزرار التحكم (تم إزالة زر التبديل) -->
+        <div class="flex justify-center items-center gap-8">
+            <!-- زر الفلاش -->
+            <button onclick="toggleFlash()" id="flash-btn" class="action-btn flex flex-col items-center gap-2 text-slate-400 hover:text-yellow-400 disabled:opacity-20 disabled:cursor-not-allowed group">
+                <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                    <i class="fa-solid fa-bolt text-lg transition-transform group-active:scale-110"></i>
+                </div>
+                <span class="text-[10px] font-light">فلاش</span>
             </button>
-        </header>
 
-        <!-- VIEW: HERO (Landing) -->
-        <section id="view-hero" class="flex-1 flex flex-col justify-center items-center text-center space-y-8 animate-fade-in">
-            <div class="relative">
-                <div class="absolute inset-0 bg-emerald-500 blur-2xl opacity-20 rounded-full"></div>
-                <div class="glass-panel p-8 rounded-3xl border-2 border-white/10 relative z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-white opacity-90 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
+            <!-- زر الإيقاف (يظهر فقط عند التشغيل) -->
+            <button onclick="stopScanner()" id="stop-btn" class="hidden action-btn flex flex-col items-center gap-2 text-slate-400 hover:text-red-400 group">
+                <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center group-hover:bg-red-500/20 shadow-lg shadow-red-900/20 transition-colors">
+                    <i class="fa-solid fa-stop text-xl"></i>
                 </div>
-            </div>
-            
-            <div class="space-y-2">
-                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-emerald-200">مسح سريع وآمن</h1>
-                <p class="text-gray-300 text-sm max-w-[250px] mx-auto">قارئ QR متطور يحترم خصوصيتك. يعمل محلياً على جهازك.</p>
-            </div>
-
-            <div class="w-full space-y-3">
-                <button onclick="startScanner()" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/40 transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    ابدأ المسح
-                </button>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <label for="qr-input-file" class="glass-btn cursor-pointer py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-white/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        رفع صورة
-                    </label>
-                    <input type="file" id="qr-input-file" accept="image/*" class="hidden" onchange="handleFileUpload(this)">
-
-                    <button onclick="showPage('history')" class="glass-btn py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-white/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        السجل
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW: SCANNER -->
-        <section id="view-scanner" class="hidden flex-1 flex flex-col relative h-full">
-            <div class="absolute inset-0 z-0 flex items-center justify-center bg-black/80 rounded-3xl overflow-hidden">
-                <div id="reader" class="w-full h-full relative"></div>
-                <!-- Overlay Frame -->
-                <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-20">
-                    <div class="w-64 h-64 border-2 border-emerald-500 rounded-2xl relative shadow-[0_0_50px_rgba(16,185,129,0.5)]">
-                        <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg -mt-1 -ml-1"></div>
-                        <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg -mt-1 -mr-1"></div>
-                        <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg -mb-1 -ml-1"></div>
-                        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-emerald-400 rounded-br-lg -mb-1 -mr-1"></div>
-                    </div>
-                    <p class="mt-8 text-white/90 text-sm font-semibold bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">وجه الكاميرا داخل المربع</p>
-                </div>
-            </div>
-
-            <!-- Scanner Controls -->
-            <div class="absolute bottom-6 left-0 right-0 z-30 flex justify-center gap-6">
-                <button onclick="stopScanner()" class="glass-btn w-12 h-12 rounded-full flex items-center justify-center bg-red-500/20 border-red-400/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </section>
-
-        <!-- VIEW: RESULT -->
-        <section id="view-result" class="hidden flex-1 flex flex-col justify-center items-center relative animate-fade-in-up">
-            <div class="glass-panel w-full p-6 rounded-3xl space-y-6 border-t border-white/20">
-                
-                <!-- Icon based on type -->
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mb-4 shadow-xl shadow-emerald-500/20">
-                        <svg id="result-icon-link" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                        <svg id="result-icon-text" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-xl font-bold text-center mb-1" id="result-type-text">تم العثور على رابط</h2>
-                    <p class="text-xs text-gray-400" id="result-date">الآن</p>
-                </div>
-
-                <!-- Content Box -->
-                <div class="bg-black/20 rounded-xl p-4 break-words">
-                    <p id="result-content" class="text-sm text-gray-200 font-mono leading-relaxed select-all">https://example.com</p>
-                </div>
-
-                <!-- Security Warning -->
-                <div id="security-warning" class="hidden bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 flex items-start gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                        <h4 class="text-xs font-bold text-yellow-200 mb-1">تنبيه أمان</h4>
-                        <p class="text-[10px] text-yellow-100/80">هذا رابط خارجي. تحقق من النطاق <span id="domain-preview" class="font-bold underline"></span> قبل المتابعة.</p>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="grid grid-cols-3 gap-3">
-                    <button id="btn-open" onclick="openResult()" class="col-span-3 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                        فتح الرابط
-                    </button>
-                    
-                    <button onclick="copyResult()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        نسخ
-                    </button>
-                    
-                    <button onclick="shareResult()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
-                        مشاركة
-                    </button>
-
-                    <button onclick="goHome()" class="glass-btn py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-xs bg-white/5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        إغلاق
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW: SETTINGS / ABOUT -->
-        <section id="view-settings" class="hidden flex-1 w-full glass-panel rounded-3xl p-6 overflow-y-auto no-scrollbar">
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                <button onclick="goHome()" class="p-1 rounded-full hover:bg-white/10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-                الإعدادات
-            </h2>
-
-            <div class="space-y-6">
-                <!-- Toggles -->
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                        <span class="text-sm">الأصوات</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="setting-sound" class="sr-only peer" checked onchange="saveSettings()">
-                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                        <span class="text-sm">الاهتزاز (Haptic)</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="setting-vibrate" class="sr-only peer" checked onchange="saveSettings()">
-                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Delete History -->
-                <button onclick="clearHistory()" class="w-full glass-btn py-3 rounded-xl text-red-300 flex items-center justify-center gap-2 text-sm hover:bg-red-500/20 hover:border-red-500/40">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    مسح كل السجل
-                </button>
-
-                <!-- About & Privacy -->
-                <div class="mt-8 text-xs text-gray-400 space-y-4">
-                    <h3 class="text-sm font-bold text-white mb-2">الخصوصية والأمان</h3>
-                    <p class="leading-relaxed">
-                        نحن لا نجمع أي بيانات. تتم معالجة جميع صور QR محلياً داخل متصفحك. لا يتم إرسال أي صورة إلى خوادم سحابية.
-                    </p>
-                    <div class="bg-white/5 p-3 rounded-lg border border-white/5">
-                        <strong>نصيحة:</strong> تحقق دائماً من الروابط قبل فتحها. يوفر هذا التطبيق معاينة للنطاق لمساعدتك.
-                    </div>
-                    <p class="text-center pt-4 opacity-50">الإصدار 1.0.0 | تصميم زجاجي</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- VIEW: HISTORY -->
-        <section id="view-history" class="hidden flex-1 w-full glass-panel rounded-3xl p-6 overflow-hidden flex flex-col">
-             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold flex items-center gap-2">
-                    <button onclick="goHome()" class="p-1 rounded-full hover:bg-white/10">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                    السجل
-                </h2>
-                <span class="text-xs text-gray-400 bg-white/10 px-2 py-1 rounded-md" id="history-count">0 عناصر</span>
-            </div>
-            
-            <div id="history-list" class="flex-1 overflow-y-auto no-scrollbar space-y-3">
-                <!-- Items injected via JS -->
-                <div class="text-center text-gray-400 mt-10">لا يوجد سجل مسح</div>
-            </div>
-        </section>
-        
-        <!-- Toast Notification -->
-        <div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-900/90 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none z-50 text-sm border border-white/10 backdrop-blur-md">
-            تم نسخ النص
+                <span class="text-[10px] font-light">إيقاف</span>
+            </button>
         </div>
 
     </main>
 
-    <!-- LOGIC -->
+    <!-- نافذة النتيجة (Modal) - تصميم داكن -->
+    <div id="result-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+        <!-- طبقة التعتيم الخلفية -->
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onclick="closeModal()"></div>
+        
+        <!-- محتوى النافذة -->
+        <div class="bg-[#0f172a] w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 border-t sm:border border-white/10 shadow-2xl transform translate-y-full sm:translate-y-10 transition-transform duration-300 pointer-events-auto flex flex-col gap-5 relative ring-1 ring-white/5">
+            <div class="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-1 sm:hidden"></div>
+            
+            <div class="text-center mt-2">
+                <div class="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 ring-1 ring-emerald-500/20">
+                    <i class="fa-solid fa-check text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">تم التقاط الكود</h3>
+            </div>
+
+            <div class="bg-black/40 p-5 rounded-2xl border border-white/5 break-all text-center relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p id="scanned-text" class="text-cyan-200 font-mono text-sm leading-relaxed relative z-10">...</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="copyResult()" class="col-span-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 border border-white/5">
+                    <i class="fa-regular fa-copy"></i> نسخ
+                </button>
+                <a id="open-link-btn" href="#" target="_blank" class="hidden col-span-1 bg-cyan-700 hover:bg-cyan-600 text-white py-3.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح
+                </a>
+                <button id="close-btn-full" onclick="closeModal()" class="col-span-2 bg-transparent hover:bg-white/5 text-slate-400 hover:text-white py-3 rounded-xl font-medium transition-colors border border-dashed border-white/10 hover:border-white/20">
+                    مسح كود آخر
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- سجل المسح -->
+    <section class="w-full max-w-sm mt-8 z-10 animate-fade-in-up">
+        <h3 class="text-slate-500 text-xs font-bold mb-4 px-2 flex items-center gap-2 uppercase tracking-wider">
+            <i class="fa-solid fa-clock-rotate-left"></i> المحفوظات
+        </h3>
+        <div id="history-list" class="flex flex-col gap-2.5 pb-20">
+            <!-- سيتم إضافة العناصر هنا بواسطة JS -->
+            <div id="empty-history" class="text-center text-slate-600 py-6 glass-panel rounded-2xl border-dashed">
+                <i class="fa-regular fa-folder-open text-2xl mb-2 opacity-50"></i>
+                <p class="text-xs">السجل فارغ</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- تذييل -->
+    <footer class="fixed bottom-0 w-full text-center py-4 text-[10px] text-slate-600 z-10 glass-panel border-t border-white/5 backdrop-blur-xl">
+        Winter Scanner &copy; 2025
+    </footer>
+
     <script>
-        // --- Global State ---
+        // --- 1. تأثير الثلج ---
+        function createSnow() {
+            const container = document.getElementById('snow-container');
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            
+            // اختيار شكل عشوائي للثلج
+            snowflake.innerHTML = Math.random() > 0.6 ? '❄' : '•';
+            
+            // خصائص عشوائية
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            snowflake.style.fontSize = Math.random() * 8 + 8 + 'px'; // حجم أصغر قليلاً
+            snowflake.style.animationDuration = Math.random() * 5 + 3 + 's'; // حركة أبطأ
+            snowflake.style.opacity = Math.random() * 0.5 + 0.1;
+            
+            container.appendChild(snowflake);
+            
+            setTimeout(() => {
+                snowflake.remove();
+            }, 8000);
+        }
+
+        setInterval(createSnow, 300); // كثافة أقل قليلاً للهدوء
+
+
+        // --- 2. إعدادات الماسح ---
         let html5QrCode;
-        let currentResult = null;
-        let settings = {
-            sound: true,
-            vibrate: true
-        };
+        let isScanning = false;
+        let currentCameraId = null;
+        const beepSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.m4a');
 
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSettings();
-            loadHistory();
-        });
-
-        // --- Navigation ---
-        function showPage(pageId) {
-            const views = ['hero', 'scanner', 'result', 'settings', 'history'];
-            views.forEach(v => {
-                document.getElementById(`view-${v}`).classList.add('hidden');
-            });
-            document.getElementById(`view-${pageId}`).classList.remove('hidden');
-        }
-
-        function goHome() {
-            stopScanner();
-            showPage('hero');
-        }
-
-        // --- Scanner Logic ---
-        async function startScanner() {
-            showPage('scanner');
-            
-            // Cleanup previous instance if exists to avoid errors
-            if (html5QrCode) {
-                try {
-                    if (html5QrCode.isScanning) await html5QrCode.stop();
-                    html5QrCode.clear();
-                } catch(e) { console.log("Cleanup warning:", e); }
-            }
-
+        function initScanner() {
             html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-            
-            try {
-                // 1. Get List of Cameras
-                const devices = await Html5Qrcode.getCameras();
-                
-                if (devices && devices.length) {
-                    let cameraId = devices[0].id;
-                    
-                    // 2. Try to find back camera (environment)
-                    const backCamera = devices.find(d => 
-                        d.label.toLowerCase().includes('back') || 
-                        d.label.toLowerCase().includes('environment') ||
-                        d.label.toLowerCase().includes('rear')
-                    );
-                    
-                    if (backCamera) {
-                        cameraId = backCamera.id;
-                    }
+        }
 
-                    // 3. Start scanning with specific camera ID (more reliable than facingMode)
-                    await html5QrCode.start(
-                        cameraId, 
-                        config, 
-                        onScanSuccess, 
-                        onScanFailure
-                    );
-                } else {
-                    // Fallback if device list is empty but API didn't fail
-                    await html5QrCode.start(
-                        { facingMode: "environment" }, 
-                        config, 
-                        onScanSuccess, 
-                        onScanFailure
-                    );
-                }
+        async function startScanner() {
+            try {
+                document.getElementById('camera-placeholder').style.display = 'none';
+                document.getElementById('scan-laser').classList.remove('hidden');
+                document.getElementById('stop-btn').classList.remove('hidden');
+                
+                // للحصول على مربع كامل، نستخدم أبعاد العنصر الأب
+                // ونطلب من المكتبة ملء المساحة بالكامل
+                const containerWidth = document.getElementById('reader').offsetWidth;
+                
+                // إعدادات محسنة للملء الكامل
+                const config = { 
+                    fps: 10, 
+                    // نجعل الصندوق بحجم الحاوية تقريباً لضمان المسح في كامل الصورة
+                    qrbox: { width: containerWidth * 0.8, height: containerWidth * 0.8 },
+                    aspectRatio: 1.0,
+                    // هذه الخاصية مهمة للملء
+                    videoConstraints: {
+                        facingMode: "environment",
+                        aspectRatio: 1.0
+                    }
+                };
+                
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                );
+                
+                isScanning = true;
+                
             } catch (err) {
-                console.error("Scanner Error: ", err);
-                
-                let msg = "تعذر الوصول للكاميرا.";
-                if (err.name === "NotAllowedError" || err.toString().includes("Permission")) {
-                    msg = "يرجى منح إذن استخدام الكاميرا.";
-                } else if (err.name === "NotFoundError" || err.toString().includes("found")) {
-                    msg = "لم يتم العثور على كاميرا مناسبة.";
-                }
-                
-                showToast(msg);
-                setTimeout(() => goHome(), 2000);
+                console.error("Error starting scanner", err);
+                alert("يرجى السماح بالوصول للكاميرا.\n" + err);
+                stopScanner();
             }
         }
 
-        async function stopScanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                try {
-                    await html5QrCode.stop();
-                    html5QrCode.clear();
-                } catch(e) { console.error(e); }
+        function stopScanner() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('camera-placeholder').style.display = 'flex';
+                    document.getElementById('scan-laser').classList.add('hidden');
+                    document.getElementById('stop-btn').classList.add('hidden');
+                }).catch(err => console.error("Failed to stop", err));
             }
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            stopScanner();
-            handleResult(decodedText);
-            playFeedback();
+            beepSound.play().catch(e => {}); 
+            showResultModal(decodedText);
+            addToHistory(decodedText);
         }
 
         function onScanFailure(error) {
-            // handle scanning failure, usually better to ignore and keep scanning.
-            // console.warn(`Code scan error = ${error}`);
+            // صامت
         }
 
-        // --- File Upload ---
-        function handleFileUpload(input) {
-            if (input.files.length === 0) return;
+        // --- 3. الفلاش ---
+        let isFlashOn = false;
+        async function toggleFlash() {
+            if (!isScanning) return;
             
-            const imageFile = input.files[0];
-            
-            // Re-instantiate if needed just for file scan
-            const fileScanner = new Html5Qrcode("reader"); // using same ID temporarily, doesn't matter for file
-            
-            fileScanner.scanFile(imageFile, true)
-                .then(decodedText => {
-                    handleResult(decodedText);
-                    playFeedback();
-                })
-                .catch(err => {
-                    showToast("لم يتم العثور على QR في الصورة");
-                    console.error(err);
-                });
-                
-            // Reset input
-            input.value = '';
+            try {
+                 if(html5QrCode.applyVideoConstraints) {
+                     await html5QrCode.applyVideoConstraints({
+                         advanced: [{ torch: !isFlashOn }]
+                     });
+                     isFlashOn = !isFlashOn;
+                     
+                     const btnIcon = document.querySelector('#flash-btn i');
+                     const btnDiv = document.querySelector('#flash-btn div');
+                     
+                     if(isFlashOn) {
+                         btnIcon.classList.add('text-yellow-400');
+                         btnDiv.classList.add('bg-yellow-400/10', 'border-yellow-400/50');
+                     } else {
+                         btnIcon.classList.remove('text-yellow-400');
+                         btnDiv.classList.remove('bg-yellow-400/10', 'border-yellow-400/50');
+                     }
+                 } else {
+                     alert("الفلاش غير مدعوم.");
+                 }
+            } catch (err) {
+                console.error(err);
+                alert("لا يمكن تشغيل الفلاش.");
+            }
         }
 
-        // --- Result Handling ---
-        function handleResult(text) {
-            currentResult = text;
-            const isUrl = isValidUrl(text);
-            const date = new Date().toLocaleDateString('ar-EG', { hour: '2-digit', minute:'2-digit' });
+        // --- 4. واجهة النتائج (Modal) ---
+        const modal = document.getElementById('result-modal');
+        const modalContent = modal.querySelector('div.bg-\\[\\#0f172a\\]'); // Selector needs adjustment for arbitrary values or just use generic
+        const scannedTextEl = document.getElementById('scanned-text');
+        const openLinkBtn = document.getElementById('open-link-btn');
+        const closeBtnFull = document.getElementById('close-btn-full');
 
-            // UI Updates
-            document.getElementById('result-content').innerText = text;
-            document.getElementById('result-date').innerText = date;
+        function showResultModal(text) {
+            scannedTextEl.innerText = text;
+            
+            const isUrl = /^(http|https):\/\/[^ "]+$/.test(text);
             
             if (isUrl) {
-                document.getElementById('result-type-text').innerText = "رابط موقع";
-                document.getElementById('result-icon-link').classList.remove('hidden');
-                document.getElementById('result-icon-text').classList.add('hidden');
-                document.getElementById('btn-open').classList.remove('hidden');
-                document.getElementById('btn-open').classList.add('flex'); // restore flex
-                
-                // Security Check
-                const domain = new URL(text).hostname;
-                document.getElementById('domain-preview').innerText = domain;
-                document.getElementById('security-warning').classList.remove('hidden');
-                document.getElementById('security-warning').classList.add('flex');
+                openLinkBtn.href = text;
+                openLinkBtn.classList.remove('hidden');
+                openLinkBtn.classList.add('flex');
+                closeBtnFull.classList.remove('col-span-2');
+                closeBtnFull.classList.add('col-span-1');
             } else {
-                document.getElementById('result-type-text').innerText = "نص / بيانات";
-                document.getElementById('result-icon-link').classList.add('hidden');
-                document.getElementById('result-icon-text').classList.remove('hidden');
-                document.getElementById('btn-open').classList.add('hidden');
-                document.getElementById('btn-open').classList.remove('flex');
-                document.getElementById('security-warning').classList.add('hidden');
-                document.getElementById('security-warning').classList.remove('flex');
+                openLinkBtn.classList.add('hidden');
+                openLinkBtn.classList.remove('flex');
+                closeBtnFull.classList.remove('col-span-1');
+                closeBtnFull.classList.add('col-span-2');
             }
 
-            addToHistory({ text, isUrl, date: new Date().toISOString() });
-            showPage('result');
-        }
-
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;  
-            }
-        }
-
-        // --- Actions ---
-        function openResult() {
-            if (currentResult && isValidUrl(currentResult)) {
-                window.open(currentResult, '_blank');
-            }
-        }
-
-        function copyResult() {
-            if (!currentResult) return;
-            navigator.clipboard.writeText(currentResult).then(() => {
-                showToast("تم النسخ للحافظة");
-            });
-        }
-
-        async function shareResult() {
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'نتيجة QR',
-                        text: currentResult,
-                    });
-                } catch (err) {
-                    console.log('Share canceled');
-                }
-            } else {
-                copyResult();
-            }
-        }
-
-        // --- Feedback ---
-        function playFeedback() {
-            if (settings.vibrate && navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-            if (settings.sound) {
-                // Simple beep using AudioContext or just no sound for simple web
-                // Using a very short base64 beep for compatibility
-                const beep = new Audio("data:audio/wav;base64,UklGRl9vT1ZQRZFfmt..."); // Shortened for brevity, typically use a real file or AudioContext
-                // Simplified Audio Context Beep
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, ctx.currentTime);
-                osc.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.1);
-            }
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.remove('opacity-0', 'translate-y-[-20px]');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-[-20px]');
-            }, 3000);
-        }
-
-        // --- Settings & Storage ---
-        function saveSettings() {
-            settings.sound = document.getElementById('setting-sound').checked;
-            settings.vibrate = document.getElementById('setting-vibrate').checked;
-            localStorage.setItem('qr_glass_settings', JSON.stringify(settings));
-        }
-
-        function loadSettings() {
-            const saved = localStorage.getItem('qr_glass_settings');
-            if (saved) {
-                settings = JSON.parse(saved);
-                document.getElementById('setting-sound').checked = settings.sound;
-                document.getElementById('setting-vibrate').checked = settings.vibrate;
-            }
-        }
-
-        // --- History ---
-        function addToHistory(item) {
-            let history = JSON.parse(localStorage.getItem('qr_glass_history') || '[]');
-            history.unshift(item);
-            if (history.length > 50) history.pop(); // Limit to 50
-            localStorage.setItem('qr_glass_history', JSON.stringify(history));
-            loadHistory();
-        }
-
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('qr_glass_history') || '[]');
-            const container = document.getElementById('history-list');
-            const countEl = document.getElementById('history-count');
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
             
-            countEl.innerText = `${history.length} عناصر`;
-            container.innerHTML = '';
+            setTimeout(() => {
+                // نستخدم querySelector مباشر للعنصر الداخلي
+                modal.children[1].style.transform = window.innerWidth < 640 ? 'translateY(0)' : 'translateY(0)';
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.children[1].style.transform = window.innerWidth < 640 ? 'translateY(100%)' : 'translateY(10rem)';
+            setTimeout(() => {
+                modal.style.opacity = '0';
+                modal.style.pointerEvents = 'none';
+            }, 300);
+        }
+
+        async function copyResult() {
+            const text = scannedTextEl.innerText;
+            try {
+                await navigator.clipboard.writeText(text);
+                const btn = document.querySelector('#result-modal button i.fa-copy').parentNode;
+                const originalHTML = btn.innerHTML;
+                
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> تم';
+                btn.classList.remove('bg-slate-800', 'text-slate-200');
+                btn.classList.add('bg-emerald-600', 'text-white');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.add('bg-slate-800', 'text-slate-200');
+                    btn.classList.remove('bg-emerald-600', 'text-white');
+                }, 2000);
+            } catch (err) {
+                alert('فشل النسخ');
+            }
+        }
+
+        // --- 5. السجل ---
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('qr_winter_history') || '[]');
+        }
+
+        function addToHistory(text) {
+            let history = getHistory();
+            const newItem = {
+                text: text,
+                date: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                type: /^(http|https):/.test(text) ? 'link' : 'text'
+            };
+            
+            if (history.length > 0 && history[0].text === text) return;
+
+            history.unshift(newItem);
+            if (history.length > 10) history.pop();
+            
+            localStorage.setItem('qr_winter_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const history = getHistory();
+            const emptyState = document.getElementById('empty-history');
 
             if (history.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 mt-10 text-sm">لا يوجد سجل مسح</div>';
+                emptyState.style.display = 'block';
+                list.innerHTML = '';
+                list.appendChild(emptyState);
                 return;
             }
 
+            emptyState.style.display = 'none';
+            
+            let html = '';
             history.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'glass-btn p-3 rounded-xl flex items-center justify-between group';
+                const icon = item.type === 'link' ? 'fa-link' : 'fa-align-left';
+                const colorClass = item.type === 'link' ? 'text-cyan-400' : 'text-slate-500';
                 
-                // Format date nice
-                const d = new Date(item.date);
-                const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
-
-                const icon = item.isUrl ? 
-                    `<svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>` : 
-                    `<svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
-
-                div.innerHTML = `
+                html += `
+                <div class="glass-panel p-3 rounded-xl flex items-center justify-between animate-fade-in-up hover:bg-white/5 transition-colors border-0 border-b border-white/5 last:border-0">
                     <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="bg-white/10 p-2 rounded-lg shrink-0">
-                            ${icon}
+                        <div class="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${icon} ${colorClass} text-[10px]"></i>
                         </div>
                         <div class="flex flex-col overflow-hidden">
-                            <span class="text-xs text-white/90 truncate font-mono dir-ltr text-right">${item.text}</span>
-                            <span class="text-[10px] text-gray-400">${dateStr}</span>
+                            <span class="text-[10px] text-slate-500 font-mono">${item.date}</span>
+                            <span class="text-xs text-slate-300 truncate max-w-[180px]">${item.text}</span>
                         </div>
                     </div>
-                    <button onclick="copyText('${item.text}')" class="p-2 text-gray-400 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <button onclick="navigator.clipboard.writeText('${item.text}')" class="text-slate-600 hover:text-white p-2 transition-colors">
+                        <i class="fa-regular fa-copy"></i>
                     </button>
+                </div>
                 `;
-                container.appendChild(div);
             });
+            
+            list.innerHTML = html;
         }
 
-        function copyText(text) {
-            navigator.clipboard.writeText(text).then(() => showToast('تم النسخ'));
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            initScanner();
+            renderHistory();
+        });
 
-        function clearHistory() {
-            if(confirm('هل أنت متأكد من مسح السجل بالكامل؟')) {
-                localStorage.removeItem('qr_glass_history');
-                loadHistory();
-                showToast('تم مسح السجل');
-            }
-        }
     </script>
 </body>
 </html>
